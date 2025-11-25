@@ -11,14 +11,12 @@ export const RegistrationSchema = z.object({
         .min(8, "Password must be at least 8 characters")
         .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
         .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-        .regex(/[0-9]/, "Password must contain at least one number"),
-    bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-    interests: z.array(z.string()).optional(),
+        .regex(/[0-9]/, "Password must contain at least one number")
 });
 
 export const LoginSchema = z.object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(1, "Password is required"),
+    email: z.string().email("Invalid email address"), 
+    password: z.string().min(1, "Password is required"), 
 });
 
 export const UserProfileUpdateSchema = z.object({
@@ -38,7 +36,7 @@ export const CheckVerificationSchema = z.object({
 });
 
 export const ForgotPasswordSchema = z.object({
-    email: z.string().email("Invalid email address!")
+    email: z.string().email("Invalid email address!") 
 });
 
 export const ResendVerificationCode = z.object({
