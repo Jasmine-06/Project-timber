@@ -1,5 +1,16 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
+export interface IUserCreateSchema {
+    name: string,
+    username: string,
+    email: string,
+    password: string,
+    verification_code?: string,
+    verification_code_expiry?: Date,
+    is_verified?: boolean,
+    bio?: string,
+    interests?: string[],
+};
 
 const userSchema = new Schema<IUserCreateSchema>(
     {
@@ -48,3 +59,5 @@ const userSchema = new Schema<IUserCreateSchema>(
 { timestamps: true });
 
 export const User = mongoose.model<IUserCreateSchema>("User", userSchema);
+
+export type IUser = InferSchemaType<typeof userSchema>;
