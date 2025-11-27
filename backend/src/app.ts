@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use(express.urlencoded({
 
 app.use(express.static("public"));
 
+app.use(errorMiddleware);
 
 export default app;
