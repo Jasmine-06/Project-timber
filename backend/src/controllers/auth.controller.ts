@@ -1,6 +1,6 @@
 import { ApiError } from "../advices/ApiError";
 import { UserRepository } from "../repositories/user.repository";
-import { LoginSchema, RegistrationSchema, VerifySchema } from "../schema/user.schema";
+import { CheckVerificationSchema, LoginSchema, RegistrationSchema, ResendVerificationCode, ResetPasswordSchema, VerifySchema } from "../schema/user.schema";
 import asyncHandler from "../utils/asyncHandler";
 import { zodErrorFormatter } from "../utils/error.formatter";
 import { comparePassword, hashedPasswords } from "../utils/bcrypt.utils";
@@ -101,7 +101,6 @@ export const RegisterController = asyncHandler(async(req, res)=>{
     })
   )
 })
-
 
 export const LoginController = asyncHandler(async(req, res) => {
      const result = LoginSchema.safeParse(req.body);
@@ -288,4 +287,95 @@ export const VerifyUser = asyncHandler(async(req, res) => {
      }
 
      
+});
+
+export const ResendVerification = asyncHandler(async (req, res) => {
+    const result = ResendVerificationCode.safeParse(req.body);
+    if (!result.success) {
+    throw new ApiError(400, "validation Error", zodErrorFormatter(result.error));
+  }
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, 'Email is required');
+  }
+
+  const user = await UserRepository.findUserByEmail(email);
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (user.is_verified) {
+    throw new ApiError(400, 'User is already verified');
+  }
+
+  // Generate new verification code
+  const verification_code = generateOtp();
+  const verification_code_expiry = generateTimeStamp("15");
+
+  // Update user with new verification code
+  const updatedUser = await UserRepository.updateUserById(
+    String(user._id),
+    {
+      verification_code,
+      verification_code_expiry
+    }
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(500, 'Failed to generate new verification code');
+  }
+
+  // Send new verification email
+
+  res.status(200).json(
+    new ApiResponse({
+      message: 'New verification code sent to your email'
+    })
+  );
+});
+
+export const CheckVerificationCodeController = asyncHandler(async(req, res)=>{
+  const result = CheckVerificationSchema.safeParse(req.body);
+  if (!result.success) {
+    throw new ApiError(400, "validation Error", zodErrorFormatter(result.error));
+  }
+
+  const {email, verificationCode} = result.data;
+
+  const existingUser = await UserRepository.findUserByEmail(email);
+
+  if(!existingUser){
+    throw new ApiError(404, "User not exist with this email");
+  }
+  if(existingUser.verification_code != verificationCode){
+    throw new ApiError(400, "Invalid verification code");
+  }
+  if(!existingUser.verification_code_expiry || existingUser.verification_code_expiry.getTime() < Date.now()){
+    throw new ApiError(400, "Verification code expired");
+  }
+  
+  res.status(200).json(
+  new ApiResponse({
+    message: "Verification code is valid"
+  }));
+});
+
+
+export const LogoutUser = asyncHandler(async (req, res) => {
+  const refresh_token = req.cookies.refresh_token;
+  const session = await SessionRepository.findSessionByToken(refresh_token);
+
+  if (refresh_token && session) {
+     await SessionRepository.deleteSessionById(String(session._id));
+  }
+
+  
+  res.clearCookie('refresh_token');
+  res.clearCookie('access_token');
+
+  res.status(200).json(new ApiResponse({
+    message : "Loged out successfully"
+  }));
 });
