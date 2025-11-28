@@ -1,6 +1,6 @@
 import { ApiError } from "../advices/ApiError";
 import { UserRepository } from "../repositories/user.repository";
-import { CheckVerificationSchema, LoginSchema, RegistrationSchema, ResendVerificationCode, ResetPasswordSchema, VerifySchema } from "../schema/user.schema";
+import { CheckVerificationSchema, ForgotPasswordSchema, LoginSchema, RegistrationSchema, ResendVerificationCode, ResetPasswordSchema, VerifySchema } from "../schema/user.schema";
 import asyncHandler from "../utils/asyncHandler";
 import { zodErrorFormatter } from "../utils/error.formatter";
 import { comparePassword, hashedPasswords } from "../utils/bcrypt.utils";
@@ -286,8 +286,43 @@ export const VerifyUser = asyncHandler(async(req, res) => {
             throw new ApiError(409, "failed to verify")
      }
 
-     
+     res.status(200).json(
+        new ApiResponse({
+            user: verified_user,
+            message: "User verified successfully"
+        })
+     );
 });
+
+export const ForgotPasswordController = asyncHandler(async(req, res)=>{
+  const result = ForgotPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    throw new ApiError(400, "validation Error", zodErrorFormatter(result.error));
+  }
+
+  const {email} = result.data;
+
+  const existingUser = await UserRepository.findUserByEmail(email);
+  if(!existingUser || !existingUser.is_verified){
+    throw new ApiError(404, "User not exist with this email");
+  }
+
+  const verification_code = generateOtp();
+
+  await UserRepository.updateUserById(String(existingUser._id),{
+      verification_code,
+      verification_code_expiry: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+  });
+
+  // Send password reset email
+
+
+  res.status(200).json(
+  new ApiResponse({
+    message: `Verification code sent to your email`
+  }));
+});
+
 
 export const ResendVerification = asyncHandler(async (req, res) => {
     const result = ResendVerificationCode.safeParse(req.body);
@@ -363,6 +398,42 @@ export const CheckVerificationCodeController = asyncHandler(async(req, res)=>{
 });
 
 
+export const ResetPasswordController = asyncHandler(async(req, res)=>{
+  const result = ResetPasswordSchema.safeParse(req.body);
+
+  if (!result.success) {
+    throw new ApiError(400, "validation Error", zodErrorFormatter(result.error));
+  }
+
+  const {email, verificationCode, newPassword} = result.data;
+
+  const existingUser = await UserRepository.findUserByEmail(email);
+  
+  if(!existingUser){
+    throw new ApiError(404, "User not exist with this email");
+  }
+  if(existingUser.verification_code != verificationCode){
+    throw new ApiError(400, "Invalid verification code");
+  }
+  if(!existingUser.verification_code_expiry || existingUser.verification_code_expiry.getTime() < Date.now()){
+    throw new ApiError(400, "Verification code expired");
+  }
+
+  const hashedPassword = await hashedPasswords(newPassword);
+
+  await UserRepository.updateUserById(String(existingUser._id),{
+      password: hashedPassword,
+      verification_code: undefined,
+      verification_code_expiry: undefined,
+  })
+
+  res.status(200).json(
+  new ApiResponse({
+    message: "Password reset successful"
+    })
+  );  
+});
+
 export const LogoutUser = asyncHandler(async (req, res) => {
   const refresh_token = req.cookies.refresh_token;
   const session = await SessionRepository.findSessionByToken(refresh_token);
@@ -371,7 +442,6 @@ export const LogoutUser = asyncHandler(async (req, res) => {
      await SessionRepository.deleteSessionById(String(session._id));
   }
 
-  
   res.clearCookie('refresh_token');
   res.clearCookie('access_token');
 
