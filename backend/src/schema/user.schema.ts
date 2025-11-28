@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const RegistrationSchema = z.object({
+const RegistrationSchema = z.object({
     name: z.string().min(1, "Name is required").max(50, "Name must be less than 50 characters"),
     username: z.string()
         .min(3, "Username must be at least 3 characters")
@@ -14,37 +14,69 @@ export const RegistrationSchema = z.object({
         .regex(/[0-9]/, "Password must contain at least one number")
 });
 
-export const LoginSchema = z.object({
+const LoginSchema = z.object({
     email: z.string().email("Invalid email address"), 
     password: z.string().min(1, "Password is required"), 
 });
 
-export const UserProfileUpdateSchema = z.object({
+const UserProfileUpdateSchema = z.object({
     name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters").optional(),
     bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
     interests: z.array(z.string()).optional(),
 });
 
-export const VerifySchema = z.object({
+const VerifySchema = z.object({
     email: z.string().email("Invalid email address"),
     verificationCode: z.string().min(6, "Verification code is atleast 6 digits").max(6, "Verification code must be exactly 6 digits"),
 });
 
-export const CheckVerificationSchema = z.object({
+const CheckVerificationSchema = z.object({
     email: z.string().email("Invalid email address"),
     verificationCode: z.string().min(6, "Verification code is atleast 6 digits").max(6, "Verification code must be exactly 6 digits"),
 });
 
-export const ForgotPasswordSchema = z.object({
+const ForgotPasswordSchema = z.object({
     email: z.string().email("Invalid email address!") 
 });
 
-export const ResendVerificationCode = z.object({
+const ResendVerificationCode = z.object({
     email: z.string().email("Invalid email address!")
 });
 
-export const ResetPasswordSchema = z.object({
+const ResetPasswordSchema = z.object({
     email: z.string().email("Invalid email address"),
     verificationCode: z.string().min(6, "Verification code is atleast 6 digits").max(6, "Verification code must be exactly 6 digits"),
     newPassword: z.string().min(6, "New password must be atleast 6 characters long")
 });
+
+type IRegistrationSchema = z.infer<typeof RegistrationSchema>;
+type ILoginSchema = z.infer<typeof LoginSchema>;
+type IUserProfileUpdateSchema = z.infer<typeof UserProfileUpdateSchema>;
+type IVerifySchema = z.infer<typeof VerifySchema>;
+type ICheckVerificationSchema = z.infer<typeof CheckVerificationSchema>;
+type IForgotPasswordSchema = z.infer<typeof ForgotPasswordSchema>;
+type IResendVerificationCode = z.infer<typeof ResendVerificationCode>;
+type IResetPasswordSchema = z.infer<typeof ResetPasswordSchema>;
+
+
+export {
+    RegistrationSchema,
+    LoginSchema,
+    UserProfileUpdateSchema,
+    VerifySchema,
+    CheckVerificationSchema,
+    ForgotPasswordSchema,
+    ResendVerificationCode,
+    ResetPasswordSchema,
+}
+
+export type { 
+    IRegistrationSchema,
+    ILoginSchema,
+    IUserProfileUpdateSchema,
+    IVerifySchema,
+    ICheckVerificationSchema,
+    IForgotPasswordSchema,
+    IResendVerificationCode,
+    IResetPasswordSchema,
+}
