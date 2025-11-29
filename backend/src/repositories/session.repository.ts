@@ -28,7 +28,7 @@ export const SessionRepository = {
 
     findSessionByUserId: async (user_id: string, projection?: any) => {
         const session = await Session.findOne(
-            { user_id },
+            { user_id: user_id as any }, // as any
             projection
         );
         return session;
@@ -61,7 +61,7 @@ export const SessionRepository = {
         projection?: any
     ) => {
         const updatedSession = await Session.findOneAndUpdate(
-            { user_id },
+            { user_id: user_id as any },
             updateData,
             { new: true, projection }
         );
@@ -74,7 +74,7 @@ export const SessionRepository = {
     },
 
     deleteSessionByUserId: async (user_id: string): Promise<Boolean> => {
-        const deletedSession = await Session.findOneAndDelete({ user_id });
+        const deletedSession = await Session.findOneAndDelete({ user_id: user_id as any });
         return !!deletedSession;
     },
 

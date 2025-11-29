@@ -59,6 +59,7 @@ const LoginController = asyncHandler(async (req, res) => {
     new ApiResponse({
       access_token: data.access_token,
       user: data.user,
+      message: "User LoggedIn Successfully!"
     })
   );
 });

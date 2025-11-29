@@ -7,7 +7,8 @@ import {
   ResendVerification,
   CheckVerificationCodeController,
   ResetPasswordController,
-  LogoutUser
+  LogoutUser,
+  ForgotPasswordController
 } from "../controllers/auth.controller";
 
 const authRouter = Router();
@@ -17,6 +18,7 @@ authRouter.post("/register", RegisterController);
 authRouter.post("/login", LoginController);
 authRouter.post("/verify", VerifyUser);
 authRouter.post("/resend-verification", ResendVerification);
+authRouter.post("/forgot", ForgotPasswordController);
 authRouter.post("/check-verification-code", CheckVerificationCodeController);
 authRouter.post("/reset-password", ResetPasswordController);
 

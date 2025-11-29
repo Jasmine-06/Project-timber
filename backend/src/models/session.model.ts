@@ -2,13 +2,13 @@ import { model, Schema } from "mongoose";
 
 
 interface ISession{
-    userId: Schema.Types.ObjectId
+    user_id: Schema.Types.ObjectId
     refresh_token: string
     expires_at: Date
 }
 
 const sessionSchema = new Schema<ISession> ({
-    userId: {
+    user_id: {
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true

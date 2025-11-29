@@ -1,5 +1,5 @@
 export const generateOtp = () : string => {
-    return String(Math.floor(Math.random() * 1000000 + 9000000))
+    return String(Math.floor(Math.random() * 100000 + 900000))
 };
 
 export const generateTimeStamp = (timeInMinutes : string) : Date => {

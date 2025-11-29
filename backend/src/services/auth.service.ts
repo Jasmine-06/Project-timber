@@ -98,7 +98,7 @@ export const AuthService = {
     await MailerService.SendVerificationCode(
       userToBeReturn.email,
       userToBeReturn.name,
-      userToBeReturn.verification_code!
+      verification_code
     );
 
     return {
@@ -222,7 +222,7 @@ export const AuthService = {
     }
 
     const userObj = await UserRepository.findUserById(
-      String(session.userId),
+      String(session.user_id),
       USER_PROJECTION
     );
 
