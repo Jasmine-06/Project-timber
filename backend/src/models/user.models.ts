@@ -1,15 +1,29 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
+export enum UserRole {
+    USER = "user",
+    ADMIN = "admin"
+}
+
+export enum AccountStatus {
+    ACTIVE = "active",
+    SUSPENDED = "suspended",
+    DELETED = "deleted"
+}
+
 export interface IUserCreateSchema {
     name: string,
     username: string,
     email: string,
     password: string,
+    roles?: UserRole[],
+    account_status?: AccountStatus,
     verification_code?: string,
     verification_code_expiry?: Date,
     is_verified?: boolean,
     bio?: string,
     interests?: string[],
+    communities?: Schema.Types.ObjectId[],
 };
 
 const userSchema = new Schema<IUserCreateSchema>(
@@ -34,6 +48,16 @@ const userSchema = new Schema<IUserCreateSchema>(
             type: String,
             required: true,
         },
+        roles: {
+            type: [String],
+            enum: Object.values(UserRole),
+            default: [UserRole.USER],
+        },
+        account_status: {
+            type: String,
+            enum: Object.values(AccountStatus),
+            default: AccountStatus.ACTIVE,
+        },
         verification_code: {
             type: String,
             default: null,
@@ -52,6 +76,11 @@ const userSchema = new Schema<IUserCreateSchema>(
         },
         interests: {
             type: [String],
+            default: [],
+        },
+        communities: {
+            type: [Schema.Types.ObjectId],
+            ref: "Community",
             default: [],
         },
 
