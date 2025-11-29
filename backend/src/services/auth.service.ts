@@ -1,4 +1,4 @@
-import type { IUser } from "../models/user.models";
+import { AccountStatus, UserRole, type IUser } from "../models/user.models";
 import type {
   IRegistrationSchema,
   IResendVerificationCode,
@@ -80,6 +80,8 @@ export const AuthService = {
           name,
           email,
           username,
+          roles: [UserRole.USER],
+          account_status: AccountStatus.ACTIVE,
           password: hashPassword,
           verification_code_expiry,
           verification_code,
