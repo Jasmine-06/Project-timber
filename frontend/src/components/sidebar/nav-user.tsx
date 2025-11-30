@@ -29,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { ThemeSwitcher } from "../kibo-ui/theme-switcher"
 
 export function NavUser({
   user,
@@ -77,6 +78,7 @@ export function NavUser({
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
+                <ThemeSwitcher/>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
