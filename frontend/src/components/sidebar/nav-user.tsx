@@ -5,14 +5,15 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
+  LogIn,
   LogOut,
   Sparkles,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
   AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -29,18 +30,66 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ThemeSwitcher } from "../kibo-ui/theme-switcher"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+import { useAuthStore } from "@/store/auth-store"
+import { AuthActions } from "@/api-actions/auth-action"
+
+export function NavUser() {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+  const { isAuthenticated, user, setLogout } = useAuthStore()
+
+  const handleLogout = async () => {
+    try {
+      await AuthActions.LogoutAction()
+      setLogout()
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
+  }
+
+  const handleLogin = () => {
+    router.push("/login")
+  }
+
+  // Default user data when authenticated but user details not loaded
+  const displayUser = user || {
+    name: "User",
+    email: "user@timber.com",
+  }
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            size="lg"
+            onClick={handleLogin}
+            className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-600">
+              <LogIn className="size-4 text-white" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">Login</span>
+              <span className="truncate text-xs">Sign in to your account</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
 
   return (
     <SidebarMenu>
@@ -52,12 +101,13 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {getInitials(displayUser.name)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{displayUser.name}</span>
+                <span className="truncate text-xs">{displayUser.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -71,14 +121,16 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(displayUser.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{displayUser.name}</span>
+                  <span className="truncate text-xs">{displayUser.email}</span>
                 </div>
-                <ThemeSwitcher/>
+
+
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -104,7 +156,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

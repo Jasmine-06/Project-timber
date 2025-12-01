@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryState } from 'nuqs';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Leaf, Eye, EyeOff, Sprout, ArrowLeft, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,11 +24,11 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 
-type ViewMode = 'login' | 'forgot' | 'reset';
+// type ViewMode = 'login' | 'forgot' | 'reset';
 
 const TimberLogin: React.FC = () => {
   const router = useRouter();
-  const [view, setView] = useQueryState<ViewMode>('view', { defaultValue: 'login' });
+  const [view, setView] = useQueryState("view", parseAsStringEnum(["login", "forgot", "reset"]).withDefault("login"));
   const [resetEmail, setResetEmail] = useQueryState('email', { defaultValue: '' });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -540,8 +540,8 @@ const TimberLogin: React.FC = () => {
           <p className="text-xs text-gray-500 dark:text-zinc-600 mt-6 text-center leading-relaxed">
             By continuing, you agree to Timber's{' '}
             <a href="#" className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors hover:underline">
-              Terms of Service
-            </a>{' '}
+              Terms   of Service
+            </a>{'   '}
             and{' '}
             <a href="#" className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors hover:underline">
               Privacy Policy
