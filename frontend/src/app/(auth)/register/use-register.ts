@@ -20,9 +20,8 @@ export const useRegister = () => {
         description: `Welcome ${data.user.name}! Please check your email to verify your account.`,
       });
 
-      // Navigate to login page or verification page
-      // You can change this to '/verify' if you have a verification page
-      router.push('/login');
+      // Navigate to OTP verification page with email as query parameter
+      router.push(`/register/verify-otp?email=${encodeURIComponent(data.user.email)}`);
     },
     onError: (error: AxiosError<ApiResponse<null>>) => {
       // Handle different error scenarios

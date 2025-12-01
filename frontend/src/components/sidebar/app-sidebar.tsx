@@ -2,17 +2,18 @@
 
 import * as React from "react"
 import {
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
+  Code,
+  FileCheck,
+  HelpCircle,
+  Home,
+  Info,
   Leaf,
+  Library,
   LifeBuoy,
-  Map,
-  PieChart,
+  Lock,
   Send,
-  Settings2,
-  SquareTerminal,
+  Shield,
+  Users,
 } from "lucide-react"
 
 import { NavMain } from "./nav-main"
@@ -28,6 +29,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { ThemeSwitcher } from "../kibo-ui/theme-switcher"
 
 const data = {
   user: {
@@ -37,90 +39,39 @@ const data = {
   },
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
+      title: "Home",
+      url: "/",
+      icon: Home,
+      isActive: true
+    },
+    {
+      title: "Resources",
+      url: "/",
+      icon: Library,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "About Timber",
+          url: "/",
+          icon: Info,
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Developer Platform",
+          url: "/",
+          icon: Code,
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Help",
+          url: "/",
+          icon: HelpCircle,
         },
       ],
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      title: "Communities",
+      url: "/",
+      icon: Users
     },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
+
   ],
   navSecondary: [
     {
@@ -134,21 +85,22 @@ const data = {
       icon: Send,
     },
   ],
-  projects: [
+ 
+  termsAndConditions: [
     {
-      name: "Design Engineering",
+      name: "Timber Rules",
       url: "#",
-      icon: Frame,
+      icon: Shield,
     },
     {
-      name: "Sales & Marketing",
+      name: "Privacy Policy",
       url: "#",
-      icon: PieChart,
+      icon: Lock,
     },
     {
-      name: "Travel",
+      name: "User Agreement",
       url: "#",
-      icon: Map,
+      icon: FileCheck,
     },
   ],
 }
@@ -176,11 +128,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects projects={data.termsAndConditions} />
+         
         <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <ThemeSwitcher/>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )
