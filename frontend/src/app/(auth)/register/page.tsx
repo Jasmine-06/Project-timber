@@ -1,93 +1,40 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Leaf, Eye, EyeOff, Sprout } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRegister } from '@/app/(auth)/register/use-register';
+import { RegistrationSchema, type IRegistrationSchema } from '@/schema/auth.schema';
 
 const TimberRegister: React.FC = () => {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ name?: string; username?: string; email?: string; password?: string }>({});
 
   // TanStack Query mutation hook
   const registerMutation = useRegister();
 
-  const validateEmail = useCallback((email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }, []);
+  // React Hook Form with Zod resolver
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<IRegistrationSchema>({
+    resolver: zodResolver(RegistrationSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      username: '',
+      email: '',
+      password: '',
+    },
+  });
 
-  const validateUsername = useCallback((username: string): boolean => {
-    return /^[a-zA-Z0-9_]{3,20}$/.test(username);
-  }, []);
-
-  const validateForm = useCallback((): boolean => {
-    const newErrors: typeof errors = {};
-
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
-    } else if (name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    }
-
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (!validateUsername(username)) {
-      newErrors.username = 'Username must be 3-20 characters (letters, numbers, underscore)';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [name, username, email, password, validateEmail, validateUsername]);
-
-  const handleRegister = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    // Call the mutation with registration data
-    registerMutation.mutate({ name, username, email, password });
-  }, [validateForm, name, username, email, password]);
-
-  const handleFieldChange = useCallback((field: 'name' | 'username' | 'email' | 'password', value: string) => {
-    if (field === 'name') {
-      setName(value);
-      if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
-    } else if (field === 'username') {
-      setUsername(value);
-      if (errors.username) setErrors(prev => ({ ...prev, username: undefined }));
-    } else if (field === 'email') {
-      setEmail(value);
-      if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
-    } else {
-      setPassword(value);
-      if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
-    }
-  }, [errors]);
-
-  const isFormValid = useMemo(() => {
-    return name.trim().length >= 2 &&
-      username.trim().length >= 3 &&
-      email.trim().length > 0 &&
-      password.length >= 6;
-  }, [name, username, email, password]);
+  const onSubmit = (data: IRegistrationSchema) => {
+    registerMutation.mutate(data);
+  };
 
   // Use mutation loading state
   const isLoading = registerMutation.isPending;
@@ -152,21 +99,19 @@ const TimberRegister: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Name Input */}
             <div>
               <label htmlFor="name" className="sr-only">Full Name</label>
               <div className="relative group">
                 <input
+                  {...register('name')}
                   id="name"
                   type="text"
                   placeholder="Full Name"
-                  value={name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
                   onFocus={() => setFocusedField('name')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.name}
                   aria-describedby={errors.name ? 'name-error' : undefined}
@@ -183,7 +128,7 @@ const TimberRegister: React.FC = () => {
               </div>
               {errors.name && (
                 <p id="name-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.name}
+                  {errors.name.message}
                 </p>
               )}
             </div>
@@ -193,15 +138,13 @@ const TimberRegister: React.FC = () => {
               <label htmlFor="username" className="sr-only">Username</label>
               <div className="relative group">
                 <input
+                  {...register('username')}
                   id="username"
                   type="text"
                   placeholder="Username"
-                  value={username}
-                  onChange={(e) => handleFieldChange('username', e.target.value)}
                   onFocus={() => setFocusedField('username')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.username}
                   aria-describedby={errors.username ? 'username-error' : undefined}
@@ -218,7 +161,7 @@ const TimberRegister: React.FC = () => {
               </div>
               {errors.username && (
                 <p id="username-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.username}
+                  {errors.username.message}
                 </p>
               )}
             </div>
@@ -228,15 +171,13 @@ const TimberRegister: React.FC = () => {
               <label htmlFor="email" className="sr-only">Email address</label>
               <div className="relative group">
                 <input
+                  {...register('email')}
                   id="email"
                   type="email"
                   placeholder="Email address"
-                  value={email}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? 'email-error' : undefined}
@@ -253,7 +194,7 @@ const TimberRegister: React.FC = () => {
               </div>
               {errors.email && (
                 <p id="email-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.email}
+                  {errors.email.message}
                 </p>
               )}
             </div>
@@ -263,15 +204,13 @@ const TimberRegister: React.FC = () => {
               <label htmlFor="password" className="sr-only">Password</label>
               <div className="relative group">
                 <input
+                  {...register('password')}
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
-                  value={password}
-                  onChange={(e) => handleFieldChange('password', e.target.value)}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? 'password-error' : undefined}
@@ -297,7 +236,7 @@ const TimberRegister: React.FC = () => {
               </div>
               {errors.password && (
                 <p id="password-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.password}
+                  {errors.password.message}
                 </p>
               )}
             </div>
@@ -305,7 +244,7 @@ const TimberRegister: React.FC = () => {
             {/* Create Account Button */}
             <button
               type="submit"
-              disabled={isLoading || !isFormValid}
+              disabled={isLoading || !isValid}
               className="w-full py-3 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white font-semibold rounded-full hover:from-emerald-600 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 dark:shadow-emerald-500/25 dark:hover:shadow-emerald-500/40 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-emerald-500/30 relative overflow-hidden group focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-950 text-sm font-bold mt-2"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">

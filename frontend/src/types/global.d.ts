@@ -7,7 +7,7 @@ interface ApiResponse<T> {
 interface ApiError {
     status_code : number,
     message : string,
-    error : Record <String, string>,
+    errors : Record <String, string>,
 }
 
 interface IUniversalMessage {

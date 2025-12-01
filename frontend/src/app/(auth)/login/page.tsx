@@ -1,66 +1,38 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Leaf, Eye, EyeOff, Sprout } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useLogin } from '@/app/(auth)/login/use-login';
+import { LoginSchema, type ILoginSchema } from '@/schema/auth.schema';
 
 const TimberLogin: React.FC = () => {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   // TanStack Query mutation hook
   const loginMutation = useLogin();
 
-  const validateEmail = useCallback((email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }, []);
+  // React Hook Form with Zod resolver
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<ILoginSchema>({
+    resolver: zodResolver(LoginSchema),
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-  const validateForm = useCallback((): boolean => {
-    const newErrors: typeof errors = {};
-
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [email, password, validateEmail]);
-
-  const handleLogin = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    // Call the mutation with email and password
-    loginMutation.mutate({ email, password });
-  }, [validateForm, email, password]); // Removed loginMutation from dependencies to prevent unnecessary re-renders
-
-  const handleFieldChange = useCallback((field: 'email' | 'password', value: string) => {
-    if (field === 'email') {
-      setEmail(value);
-      if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
-    } else {
-      setPassword(value);
-      if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
-    }
-  }, [errors]);
-
-  const isFormValid = useMemo(() => {
-    return email.trim().length > 0 && password.length >= 6;
-  }, [email, password]);
+  const onSubmit = (data: ILoginSchema) => {
+    loginMutation.mutate(data);
+  };
 
   // Use mutation loading state
   const isLoading = loginMutation.isPending;
@@ -125,21 +97,19 @@ const TimberLogin: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
               <div className="relative group">
                 <input
+                  {...register('email')}
                   id="email"
                   type="email"
                   placeholder="Email address"
-                  value={email}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? 'email-error' : undefined}
@@ -156,7 +126,7 @@ const TimberLogin: React.FC = () => {
               </div>
               {errors.email && (
                 <p id="email-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.email}
+                  {errors.email.message}
                 </p>
               )}
             </div>
@@ -166,15 +136,13 @@ const TimberLogin: React.FC = () => {
               <label htmlFor="password" className="sr-only">Password</label>
               <div className="relative group">
                 <input
+                  {...register('password')}
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
-                  value={password}
-                  onChange={(e) => handleFieldChange('password', e.target.value)}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
                   disabled={isLoading}
-                  required
                   aria-required="true"
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? 'password-error' : undefined}
@@ -200,7 +168,7 @@ const TimberLogin: React.FC = () => {
               </div>
               {errors.password && (
                 <p id="password-error" className="text-red-500 dark:text-red-400 text-xs mt-2 font-medium">
-                  {errors.password}
+                  {errors.password.message}
                 </p>
               )}
             </div>
@@ -218,7 +186,7 @@ const TimberLogin: React.FC = () => {
             {/* Sign In Button */}
             <button
               type="submit"
-              disabled={isLoading || !isFormValid}
+              disabled={isLoading || !isValid}
               className="w-full py-3 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white font-semibold rounded-full hover:from-emerald-600 hover:via-emerald-700 hover:to-teal-700 transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 dark:shadow-emerald-500/25 dark:hover:shadow-emerald-500/40 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-emerald-500/30 relative overflow-hidden group focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-950 text-sm font-bold"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
