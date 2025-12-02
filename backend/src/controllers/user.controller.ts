@@ -8,15 +8,13 @@ export const meController = asyncHandler(async (req, res) => {
         throw new ApiError(401, "User not authorized");
     }
 
-    const {id}=req.user;
+    const { _id } = req.user;
 
-    const user = await UserRepository.findUserById(id);
+    const user = await UserRepository.findUserById(_id, { password: 0 });
 
     if(!user){
-        throw new ApiError(404, "User not authorized");
+        throw new ApiError(404, "User not found");
     }
 
-    const {password,...rest}=user;
-
-    res.status(200).json(new ApiResponse(rest));
+    res.status(200).json(new ApiResponse(user));
 })

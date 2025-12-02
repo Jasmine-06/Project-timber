@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
+import userRouter from "./routes/user.route";
+
 
 const app = express();
 
@@ -29,6 +31,7 @@ app.use(express.static("public"));
 
 // Routes 
 app.use('/api/v1/auth',authRouter)
+app.use('/api/v1/user',userRouter)
 
 app.use(errorMiddleware);
 
