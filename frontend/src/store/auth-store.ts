@@ -6,7 +6,8 @@ interface AuthStore {
     isAuthenticated : boolean,
     user: IUser | null,
     setLogin : (data: ILoginResponse) => void,
-    setLogout : () => void
+    setLogout : () => void,
+    setUser : (user : IUser) => void
 }
 
 const useAuthStore = create<AuthStore>() (
@@ -16,21 +17,23 @@ const useAuthStore = create<AuthStore>() (
             isAuthenticated : !!token,
             user : null,
             setLogin : (data : ILoginResponse) => {
-                setCookie("auth_token", data.access_token, {
-                    httpOnly: false
-                });
+
+                setCookie("auth_token", data.access_token);
                 set(() => ({
                     isAuthenticated: true,
                     user: data.user
                 }))
             },
             setLogout: () => {
-                setCookie("auth_token", "", {
-                    httpOnly: false
-                });
+                setCookie("auth_token", '');
                 set(() => ({
                     isAuthenticated: false,
                     user: null
+                }))
+            },
+            setUser : (user : IUser) => {
+                set(() => ({
+                    user : user
                 }))
             }
         }
@@ -40,3 +43,5 @@ const useAuthStore = create<AuthStore>() (
 ) 
 
 export { useAuthStore };
+
+// {access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7I…zI5fQ.jKtJIpNkEZgWLPUHTEob-TLJQLhlXJz3Gf2VtqFm3-4', user: {…}, message: 'User LoggedIn Successfully!'}
