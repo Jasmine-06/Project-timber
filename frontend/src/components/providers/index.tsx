@@ -2,6 +2,7 @@ import { Toaster } from "sonner";
 import ReactQueryProvider from "./query-provider";
 import { ThemeProvider } from "./theme-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import AuthProvider from "./auth-provider";
 
 export default function GlobalProvider({
   children,
@@ -16,10 +17,12 @@ export default function GlobalProvider({
       disableTransitionOnChange
     >
       <ReactQueryProvider>
+       <AuthProvider>
         <NuqsAdapter>
           {children}
           <Toaster/>
         </NuqsAdapter>
+       </AuthProvider>
       </ReactQueryProvider>
 
     </ThemeProvider>

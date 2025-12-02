@@ -10,13 +10,6 @@ export const UserRepository = {
         return newUser;
     },
 
-    // findAllUsers : async (projection?: any) : Promise<IUser[]> => {
-    //     // Use the .find({}) method to get all documents.
-    //     // In a production app, you would typically add sorting and pagination here.
-    //     const users = await User.find({}, projection);
-    //     return users;
-    // },
-
     findUserByEmail : async (email: string, projection?: any) => {
         const user = await User.findOne(
             {email}, projection

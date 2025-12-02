@@ -23,6 +23,8 @@ const USER_PROJECTION = {
   email: 1,
   username: 1,
   is_verified: 1,
+  roles : 1,
+  account_status : 1,
   createdAt: 1,
   updatedAt: 1,
 };
