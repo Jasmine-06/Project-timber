@@ -8,7 +8,7 @@ import { AuthActions } from '@/api-actions/auth-action';
 
 const axiosInstance = axios.create({
     baseURL: BACKEND_URL,
-    timeout: 10000,
+    timeout: 30000,
     withCredentials: true
 });
 

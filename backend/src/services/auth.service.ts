@@ -53,51 +53,67 @@ export const AuthService = {
     let userToBeReturn: IUser | null = null;
     let statusCode = 201;
 
-    if (existingUserByEmail) {
-      // Update existing unverified user
-      userToBeReturn = await UserRepository.updateUserById(
-        String(existingUserByEmail._id),
-        {
-          name,
-          password: hashPassword,
-          username,
-          verification_code,
-          verification_code_expiry,
-          is_verified: false,
-        },
-        USER_PROJECTION
-      );
+    try {
+      if (existingUserByEmail) {
+        // Update existing unverified user
+        userToBeReturn = await UserRepository.updateUserById(
+          String(existingUserByEmail._id),
+          {
+            name,
+            password: hashPassword,
+            username,
+            verification_code,
+            verification_code_expiry,
+            is_verified: false,
+          },
+          USER_PROJECTION
+        );
 
-      if (!userToBeReturn) {
-        throw new ApiError(500, "Failed to update user");
+        if (!userToBeReturn) {
+          throw new ApiError(500, "Failed to update user");
+        }
+
+        statusCode = 200;
+      } else {
+        // Create new user
+        const createdUser = await UserRepository.createUser(
+          {
+            name,
+            email,
+            username,
+            roles: [UserRole.USER],
+            account_status: AccountStatus.ACTIVE,
+            password: hashPassword,
+            verification_code_expiry,
+            verification_code,
+            is_verified: false,
+          },
+          USER_PROJECTION
+        );
+
+        if (!createdUser) {
+          throw new ApiError(409, "Failed to create user");
+        }
+
+        userToBeReturn = createdUser;
       }
-
-      statusCode = 200;
-    } else {
-      // Create new user
-      const createdUser = await UserRepository.createUser(
-        {
-          name,
-          email,
-          username,
-          roles: [UserRole.USER],
-          account_status: AccountStatus.ACTIVE,
-          password: hashPassword,
-          verification_code_expiry,
-          verification_code,
-          is_verified: false,
-        },
-        USER_PROJECTION
-      );
-
-      if (!createdUser) {
-        throw new ApiError(409, "Failed to create user");
+    } catch (error: any) {
+      // Handle MongoDB duplicate key error
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyValue || {})[0];
+        if (field === "username") {
+          throw new ApiError(400, "This username is already taken");
+        } else if (field === "email") {
+          throw new ApiError(400, "User already exists with this email");
+        }
+        throw new ApiError(400, `Duplicate ${field} found`);
       }
-
-      userToBeReturn = createdUser;
+      // Re-throw if it's already an ApiError or other error
+      throw error;
     }
 
-    await MailerService.SendVerificationCode(
+    // Send email asynchronously without blocking the response
+    MailerService.SendVerificationCode(
       userToBeReturn.email,
       userToBeReturn.name,
       verification_code
@@ -256,7 +272,8 @@ export const AuthService = {
       verification_code_expiry,
     });
 
-    await MailerService.SendPasswordResetEmail(email, existingUser.name, verification_code);
+    // Send email asynchronously without blocking the response
+    MailerService.SendPasswordResetEmail(email, existingUser.name, verification_code);
 
     return {
       message: "Verification code sent to your email",
@@ -295,7 +312,8 @@ export const AuthService = {
       throw new ApiError(500, "Failed to generate new verification code");
     }
 
-    await MailerService.SendVerificationCode(
+    // Send email asynchronously without blocking the response
+    MailerService.SendVerificationCode(
       email,
       user.name,
       verification_code

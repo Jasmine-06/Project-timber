@@ -3,17 +3,17 @@ import { ApiError } from "./ApiError";
 class ApiResponse<T> {
     localDate: Date;
     data?: T | null;
-    error?: ApiError;
+    apiError?: ApiError;
 
-    constructor(data?: T, error?: ApiError) {
+    constructor(data?: T, apiError?: ApiError) {
         this.localDate = new Date();
         this.data = data;
-        this.error = error;
+        this.apiError = apiError;
 
-        if(error) {
+        if(apiError) {
             this.data = null;
         }
-        if(!error && !data) {
+        if(!apiError && !data) {
             this.data = null;
         }
         else {

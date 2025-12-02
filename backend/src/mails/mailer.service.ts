@@ -10,40 +10,67 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
   },
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+});
+
+// Verify transporter on startup
+transporter.verify((error) => {
+  if (error) {
+    console.error("SMTP connection error:", error);
+  } else {
+    console.log("SMTP server is ready to send emails");
+  }
 });
 
 export const MailerService = {
-  SendVerificationCode: async (
+  // Send email without blocking - fire and forget
+  SendVerificationCode: (
     email: string,
     name: string,
     verificationCode: string
   ) => {
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: `"Timber" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Verification Code",
       html: VerificationHtml(name, verificationCode),
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(info);
-    console.log("Message sent: %s", info.messageId);
+    // Send email asynchronously without awaiting
+    transporter.sendMail(mailOptions)
+      .then((info) => {
+        console.log("Verification email sent: %s", info.messageId);
+      })
+      .catch((error) => {
+        console.error("Error sending verification email:", error);
+      });
   },
 
-  SendPasswordResetEmail: async (
+  // Send email without blocking - fire and forget
+  SendPasswordResetEmail: (
     email: string,
     name: string,
     verificationCode: string
   ) => {
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: `"Timber" <${process.env.SMTP_USER}>`,
       to: email,
       subject: "Password Reset Request",
       html: PasswordResetHtml(name, verificationCode),
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(info);
-    console.log("Message sent: %s", info.messageId);
+    // Send email asynchronously without awaiting
+    transporter.sendMail(mailOptions)
+      .then((info) => {
+        console.log("Password reset email sent: %s", info.messageId);
+      })
+      .catch((error) => {
+        console.error("Error sending password reset email:", error);
+      });
   },
 };
