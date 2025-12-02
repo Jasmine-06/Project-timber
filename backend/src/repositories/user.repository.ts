@@ -1,4 +1,3 @@
-import { boolean } from "zod";
 import { User, type IUser, type IUserCreateSchema } from "../models/user.models";
 
 export const UserRepository = {
@@ -10,6 +9,13 @@ export const UserRepository = {
         }
         return newUser;
     },
+
+    // findAllUsers : async (projection?: any) : Promise<IUser[]> => {
+    //     // Use the .find({}) method to get all documents.
+    //     // In a production app, you would typically add sorting and pagination here.
+    //     const users = await User.find({}, projection);
+    //     return users;
+    // },
 
     findUserByEmail : async (email: string, projection?: any) => {
         const user = await User.findOne(

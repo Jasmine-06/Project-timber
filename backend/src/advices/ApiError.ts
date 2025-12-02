@@ -1,11 +1,11 @@
 class ApiError {
 
-    statusCode: number;
+    status_code: number;
     message: string;
     errors?: Record<string, string>;
 
-    constructor(statusCode: number, message: string, errors?: Record<string, string>) {
-        this.statusCode = statusCode;
+    constructor(status_code: number, message: string, errors?: Record<string, string>) {
+        this.status_code = status_code;
         this.message = message;
         this.errors = errors;
     }

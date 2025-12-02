@@ -214,12 +214,14 @@ const TimberRegister: React.FC = () => {
                   aria-required="true"
                   aria-invalid={!!errors.password}
                   aria-describedby={errors.password ? 'password-error' : undefined}
+                  autoComplete="new-password"
                   className={`w-full px-5 py-3 bg-white dark:bg-zinc-800/60 dark:backdrop-blur-md border-2 ${errors.password
                     ? 'border-red-500 shadow-lg shadow-red-500/20'
                     : focusedField === 'password'
                       ? 'border-emerald-500 shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/30'
                       : 'border-gray-300 dark:border-zinc-700'
                     } rounded-full text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 focus:outline-none transition-all duration-300 hover:border-gray-400 dark:hover:border-zinc-600 pr-12 disabled:opacity-50 disabled:cursor-not-allowed text-sm autofill:bg-white dark:autofill:bg-zinc-800/60 autofill:text-gray-900 dark:autofill:text-white autofill:shadow-[inset_0_0_0px_1000px_rgb(255_255_255)] dark:autofill:shadow-[inset_0_0_0px_1000px_rgb(39_39_42/0.6)] [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden [&::-webkit-textfield-decoration-container]:pr-0`}
+                  style={{ WebkitAppearance: 'none' }}
                 />
                 <button
                   type="button"

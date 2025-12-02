@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../advices/ApiResponse";
 import { ApiError } from "../advices/ApiError";
-import type { isForInStatement } from "typescript";
 import { verifyAccessToken } from "../utils/jwt.utils";
 
 declare global{
