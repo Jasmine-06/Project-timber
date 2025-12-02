@@ -7,16 +7,17 @@ export const checkRole = (allowedUser: UserRole[]) => {
         const userRoles = (req.user?.roles || []) as UserRole[];
         console.log(userRoles);
 
-         if(userRoles.length == 0) {
-            throw new ApiError(401, "unauthenticated user")
-         }
+        // If there are no roles on the user, treat as unauthenticated
+        if (userRoles.length === 0) {
+            return next(new ApiError(401, "unauthenticated user"));
+        }
 
         const isAllowedRole = userRoles.some((role) => allowedUser.includes(role));
 
-        if(!isAllowedRole) {
-            throw new ApiError(403, "Access denied")
+        if (!isAllowedRole) {
+            return next(new ApiError(403, "Access denied"));
         }
-       
+
         next();
 
     }
