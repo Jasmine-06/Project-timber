@@ -10,9 +10,6 @@ import {
   LogoutUser,
   ForgotPasswordController
 } from "../controllers/auth.controller";
-import { AuthMiddleware } from "../middlewares/auth.middleware";
-import { isAdmin } from "../middlewares/role.middleware";
-import { GetAllUserController, ReactiveUserController, SuspendedUserController } from "../controllers/admin.controller";
 
 const authRouter = Router();
 
@@ -30,17 +27,5 @@ authRouter.post("/refresh-token", RefreshAccessToken);
 
 // Protected routes (logout requires authentication)
 authRouter.post("/logout", LogoutUser);
-
-
-
-
-authRouter.use(AuthMiddleware);
-authRouter.use(isAdmin);
-
-authRouter.get("/", GetAllUserController);
-authRouter.patch("/:userId/suspend", SuspendedUserController);
-authRouter.patch("/:userId/reactive", ReactiveUserController);
-
-
 
 export default authRouter;

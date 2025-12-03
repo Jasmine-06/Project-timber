@@ -8,32 +8,26 @@ import type {
   IResetPasswordSchema,
   IForgotPasswordSchema,
 } from "../schema/user.schema";
-import { UserRepository } from "../repositories/user.repository";
+import {
+  USER_PROJECTION,
+  UserRepository,
+} from "../repositories/user.repository";
 import { ApiError } from "../advices/ApiError";
 import { hashedPasswords, comparePassword } from "../utils/bcrypt.utils";
 import { generateOtp, generateTimeStamp } from "../utils/otp.utils";
 import { SessionRepository } from "../repositories/session.repository";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.utils";
 import { MailerService } from "../mails/mailer.service";
+import logger from "../utils/logger";
 
 // Common projection for user responses
-const USER_PROJECTION = {
-  _id: 1,
-  name: 1,
-  email: 1,
-  username: 1,
-  is_verified: 1,
-  roles : 1,
-  account_status : 1,
-  createdAt: 1,
-  updatedAt: 1,
-};
 
 export const AuthService = {
   RegisterUser: async (
     data: IRegistrationSchema
   ): Promise<{ user: IUser; status_code: number }> => {
     const { name, username, email, password } = data;
+    logger.debug({ email, username }, "RegisterUser service called");
     const existingUserByEmail = await UserRepository.findUserByEmail(email);
 
     if (existingUserByEmail?.is_verified === true) {
@@ -58,6 +52,10 @@ export const AuthService = {
     try {
       if (existingUserByEmail) {
         // Update existing unverified user
+        logger.info(
+          { userId: existingUserByEmail._id },
+          "Updating existing unverified user"
+        );
         userToBeReturn = await UserRepository.updateUserById(
           String(existingUserByEmail._id),
           {
@@ -78,6 +76,7 @@ export const AuthService = {
         statusCode = 200;
       } else {
         // Create new user
+        logger.info({ email }, "Creating new user");
         const createdUser = await UserRepository.createUser(
           {
             name,
@@ -129,7 +128,7 @@ export const AuthService = {
 
   VerifyUser: async (data: IVerifySchema) => {
     const { email, verificationCode } = data;
-
+    logger.debug({ email }, "VerifyUser service called");
     const user = await UserRepository.findUserByEmail(email);
 
     if (!user) {
@@ -177,7 +176,7 @@ export const AuthService = {
 
   LoginUser: async (data: ILoginSchema) => {
     const { email, password } = data;
-
+    logger.debug({ email }, "LoginUser service called");
     const savedUser = await UserRepository.findUserByEmail(email);
     if (!savedUser) {
       throw new ApiError(401, "Invalid credentials");
@@ -231,6 +230,7 @@ export const AuthService = {
   },
 
   RefreshAccessToken: async (refresh_token: string) => {
+    logger.debug("RefreshAccessToken service called");
     if (!refresh_token) {
       throw new ApiError(401, "Refresh token not provided");
     }
@@ -260,7 +260,7 @@ export const AuthService = {
 
   ForgotPassword: async (data: IForgotPasswordSchema) => {
     const { email } = data;
-
+    logger.debug({ email }, "ForgotPassword service called");
     const existingUser = await UserRepository.findUserByEmail(email);
     if (!existingUser || !existingUser.is_verified) {
       throw new ApiError(404, "User not found with this email");
@@ -275,7 +275,11 @@ export const AuthService = {
     });
 
     // Send email asynchronously without blocking the response
-    MailerService.SendPasswordResetEmail(email, existingUser.name, verification_code);
+    MailerService.SendPasswordResetEmail(
+      email,
+      existingUser.name,
+      verification_code
+    );
 
     return {
       message: "Verification code sent to your email",
@@ -284,7 +288,7 @@ export const AuthService = {
 
   ResendVerificationCode: async (data: IResendVerificationCode) => {
     const { email } = data;
-
+    logger.debug({ email }, "ResendVerificationCode service called");
     if (!email) {
       throw new ApiError(400, "Email is required");
     }
@@ -302,24 +306,17 @@ export const AuthService = {
     const verification_code = generateOtp();
     const verification_code_expiry = generateTimeStamp("15");
 
-    const updatedUser = await UserRepository.updateUserById(
-      String(user._id),
-      {
-        verification_code,
-        verification_code_expiry,
-      }
-    );
+    const updatedUser = await UserRepository.updateUserById(String(user._id), {
+      verification_code,
+      verification_code_expiry,
+    });
 
     if (!updatedUser) {
       throw new ApiError(500, "Failed to generate new verification code");
     }
 
     // Send email asynchronously without blocking the response
-    MailerService.SendVerificationCode(
-      email,
-      user.name,
-      verification_code
-    );
+    MailerService.SendVerificationCode(email, user.name, verification_code);
 
     return {
       message: "New verification code sent to your email",
@@ -328,7 +325,7 @@ export const AuthService = {
 
   CheckVerificationCode: async (data: ICheckVerificationSchema) => {
     const { email, verificationCode } = data;
-
+    logger.debug({ email }, "CheckVerificationCode service called");
     const existingUser = await UserRepository.findUserByEmail(email);
 
     if (!existingUser) {
@@ -353,7 +350,7 @@ export const AuthService = {
 
   ResetPassword: async (data: IResetPasswordSchema) => {
     const { email, verificationCode, newPassword } = data;
-
+    logger.debug({ email }, "ResetPassword service called");
     const existingUser = await UserRepository.findUserByEmail(email);
 
     if (!existingUser) {
@@ -385,6 +382,7 @@ export const AuthService = {
   },
 
   LogoutUser: async (refreshToken: string) => {
+    logger.debug("LogoutUser service called");
     if (refreshToken) {
       const session = await SessionRepository.findSessionByToken(refreshToken);
 
