@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import authRouter from "./routes/auth.route";
 import userRouter from "./routes/user.route";
-import adminRouter from "./routes/admin.route";
+
 
 
 const app = express();
@@ -34,7 +34,7 @@ app.use(express.static("public"));
 app.use('/api/v1/auth',authRouter);
 app.use('/api/v1/user',userRouter);
 
-app.use('/api/v1/admin', adminRouter);
+
 
 app.use(errorMiddleware);
 
