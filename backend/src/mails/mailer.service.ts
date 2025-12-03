@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import "dotenv/config";
 import { VerificationHtml, PasswordResetHtml } from "./mailer.html";
+import logger from "../utils/logger";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -21,9 +22,9 @@ const transporter = nodemailer.createTransport({
 // Verify transporter on startup
 transporter.verify((error) => {
   if (error) {
-    console.error("SMTP connection error:", error);
+    logger.error(error, "SMTP connection error");
   } else {
-    console.log("SMTP server is ready to send emails");
+    logger.info("SMTP server is ready to send emails");
   }
 });
 
@@ -42,12 +43,13 @@ export const MailerService = {
     };
 
     // Send email asynchronously without awaiting
-    transporter.sendMail(mailOptions)
+    transporter
+      .sendMail(mailOptions)
       .then((info) => {
-        console.log("Verification email sent: %s", info.messageId);
+        logger.info({ messageId: info.messageId }, "Verification email sent");
       })
       .catch((error) => {
-        console.error("Error sending verification email:", error);
+        logger.error(error, "Error sending verification email");
       });
   },
 
@@ -65,12 +67,13 @@ export const MailerService = {
     };
 
     // Send email asynchronously without awaiting
-    transporter.sendMail(mailOptions)
+    transporter
+      .sendMail(mailOptions)
       .then((info) => {
-        console.log("Password reset email sent: %s", info.messageId);
+        logger.info({ messageId: info.messageId }, "Password reset email sent");
       })
       .catch((error) => {
-        console.error("Error sending password reset email:", error);
+        logger.error(error, "Error sending password reset email");
       });
   },
 };
