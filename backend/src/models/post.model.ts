@@ -3,6 +3,7 @@ import { model, Schema } from "mongoose";
 export interface IPost {
     user_id: Schema.Types.ObjectId;
     images: string[];
+    videos: string[];
     caption?: string;
 }
 
@@ -14,6 +15,10 @@ const postSchema = new Schema<IPost>(
             required: true,
         },
         images: {
+            type: [String],
+            default: [],
+        },
+        videos: {
             type: [String],
             default: [],
         },
