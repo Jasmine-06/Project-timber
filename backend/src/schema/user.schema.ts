@@ -49,6 +49,12 @@ const ResetPasswordSchema = z.object({
     newPassword: z.string().min(6, "New password must be atleast 6 characters long")
 });
 
+const GetUserQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  search: z.string().optional(),
+});
+
 type IRegistrationSchema = z.infer<typeof RegistrationSchema>;
 type ILoginSchema = z.infer<typeof LoginSchema>;
 type IUserProfileUpdateSchema = z.infer<typeof UserProfileUpdateSchema>;
@@ -57,6 +63,8 @@ type ICheckVerificationSchema = z.infer<typeof CheckVerificationSchema>;
 type IForgotPasswordSchema = z.infer<typeof ForgotPasswordSchema>;
 type IResendVerificationCode = z.infer<typeof ResendVerificationCode>;
 type IResetPasswordSchema = z.infer<typeof ResetPasswordSchema>;
+type IGetUserQuerySchema = z.infer<typeof GetUserQuerySchema>; 
+
 
 
 export {
@@ -68,6 +76,7 @@ export {
     ForgotPasswordSchema,
     ResendVerificationCode,
     ResetPasswordSchema,
+    GetUserQuerySchema
 }
 
 export type { 
@@ -79,5 +88,6 @@ export type {
     IForgotPasswordSchema,
     IResendVerificationCode,
     IResetPasswordSchema,
+    IGetUserQuerySchema
 }
 

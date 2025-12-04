@@ -1,7 +1,7 @@
 import { ApiError } from "../advices/ApiError";
 import { ApiResponse } from "../advices/ApiResponse";
 import { UserRepository } from "../repositories/user.repository";
-import { GetUserQuerySchema } from "../schema/admin.schema";
+import { GetUserQuerySchema } from "../schema/user.schema";
 import { UserService } from "../services/user.service";
 import asyncHandler from "../utils/asyncHandler";
 import { zodErrorFormatter } from "../utils/error.formatter";
