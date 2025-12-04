@@ -1,7 +1,4 @@
 "use client"
-
-import { AppSidebar } from "@/components/sidebar/app-sidebar"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/auth-store"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Grid3x3, Bookmark } from "lucide-react"
@@ -21,9 +18,6 @@ export default function ProfilePage() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
         <div className="flex-1 bg-background min-h-screen">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Profile Header */}
@@ -130,7 +124,5 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   )
 }
