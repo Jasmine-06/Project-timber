@@ -69,20 +69,27 @@ export const UserRepository = {
     return !!deletedUser;
   },
 
-  createSearchFilter: (search: string) => {
-        if(!search) return {};
-        const searchRegex = new RegExp(search, "i");
-        return {
-            $or: [
-                { name: {$regex: searchRegex} },
-                { username: {$regex: searchRegex} },
-                { email: {$regex: searchRegex} },
-            ]
-        }
-    },
+  createSearchFilter: (search: string, account_status?: string) => {
+    const filter: any = {};
 
-    countAllUser: async (search: string="") : Promise<number> => {
-        const filter = UserRepository.createSearchFilter(search);
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      filter.$or = [
+        { name: { $regex: searchRegex } },
+        { username: { $regex: searchRegex } },
+        { email: { $regex: searchRegex } },
+      ];
+    }
+
+    if (account_status && account_status !== "all") {
+      filter.account_status = account_status;
+    }
+
+    return filter;
+  },
+
+    countAllUser: async (search: string="", account_status?: string) : Promise<number> => {
+        const filter = UserRepository.createSearchFilter(search, account_status);
         return await User.countDocuments(filter);
     },
 
@@ -96,6 +103,17 @@ export const UserRepository = {
         query = query.sort({createdAt: -1});
         const users = await query.exec();
         return users;
+    },
+
+    findAllUserAdmin : async (projection?: any, skip?: number, limit?: number, search: string="", account_status: string="") : Promise<IUser[]> => {
+       const filter = UserRepository.createSearchFilter(search, account_status);
+       let query = User.find(filter, projection);
+       if(skip !== undefined && limit !== undefined) {
+        query = query.skip(skip).limit(limit);
+       }
+       query = query.sort({createdAt: -1});
+       const users = await query.exec();
+       return users;
     },
 
   followUser: async (followerId: string, followingId: string) => {

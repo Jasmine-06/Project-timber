@@ -1,7 +1,7 @@
 import { ApiError } from "../advices/ApiError";
 import { ApiResponse } from "../advices/ApiResponse";
 import { UserRepository } from "../repositories/user.repository";
-import { GetUserQuerySchema } from "../schema/user.schema";
+import { GetAdminUserQuerySchema, GetUserQuerySchema } from "../schema/user.schema";
 import { UserService } from "../services/user.service";
 import asyncHandler from "../utils/asyncHandler";
 import { zodErrorFormatter } from "../utils/error.formatter";
@@ -45,6 +45,35 @@ const GetAllUserController = asyncHandler(async (req, res) => {
       message: "User list retrieved successfully",
     })
   );
+});
+
+const GetAllUserAdminController = asyncHandler(async (req, res) => {
+   logger.debug({query: req.query},"GetAllUserAdminController request");
+
+   const result = GetAdminUserQuerySchema.safeParse(req.query);
+   if(!result.success) {
+      throw new ApiError(
+        400, 
+        "validation error", 
+        zodErrorFormatter(result.error)
+      );
+   }
+   const paginationParams = result.data;
+   const data = await UserService.getAdminAllUser(paginationParams);
+   res.status(200).json(
+    new ApiResponse({
+      data: data.user,
+      pagination: {
+        totalUser: data.totalUser,
+        totalPage: data.totalPage,
+        currentPage: data.currentPage,
+        limit: paginationParams.limit,
+        account_status: paginationParams.account_status
+      },
+      message: "User list retrieved successfully",
+    })
+  );
+
 });
 
 const SuspendedUserController = asyncHandler(async (req, res) => {
@@ -217,6 +246,8 @@ const GetUserFollowingController = asyncHandler(async (req, res) => {
   );
 });
 
+
+
 export {
   meController,
   GetAllUserController,
@@ -226,4 +257,10 @@ export {
   UnfollowUserController,
   GetUserFollowersController,
   GetUserFollowingController,
+  GetAllUserAdminController
 };
+
+
+
+// page , limit , search ="", account_status="active", "suspended" , "delete"
+// account_status="active", "suspended" , "deleted" ."all"

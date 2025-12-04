@@ -55,6 +55,13 @@ const GetUserQuerySchema = z.object({
   search: z.string().optional(),
 });
 
+const GetAdminUserQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  search: z.string().optional(),
+  account_status: z.string().optional(),
+});
+
 type IRegistrationSchema = z.infer<typeof RegistrationSchema>;
 type ILoginSchema = z.infer<typeof LoginSchema>;
 type IUserProfileUpdateSchema = z.infer<typeof UserProfileUpdateSchema>;
@@ -64,6 +71,7 @@ type IForgotPasswordSchema = z.infer<typeof ForgotPasswordSchema>;
 type IResendVerificationCode = z.infer<typeof ResendVerificationCode>;
 type IResetPasswordSchema = z.infer<typeof ResetPasswordSchema>;
 type IGetUserQuerySchema = z.infer<typeof GetUserQuerySchema>; 
+type IGetAdminUserQuerySchema = z.infer<typeof GetAdminUserQuerySchema>
 
 
 
@@ -76,7 +84,8 @@ export {
     ForgotPasswordSchema,
     ResendVerificationCode,
     ResetPasswordSchema,
-    GetUserQuerySchema
+    GetUserQuerySchema,
+    GetAdminUserQuerySchema
 }
 
 export type { 
@@ -88,6 +97,7 @@ export type {
     IForgotPasswordSchema,
     IResendVerificationCode,
     IResetPasswordSchema,
-    IGetUserQuerySchema
+    IGetUserQuerySchema,
+    IGetAdminUserQuerySchema
 }
 

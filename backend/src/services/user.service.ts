@@ -1,5 +1,5 @@
 import { ApiError } from "../advices/ApiError";
-import type { IGetUserQuerySchema } from "../schema/user.schema";
+import type { IGetAdminUserQuerySchema, IGetUserQuerySchema } from "../schema/user.schema";
 import { AccountStatus, UserRole, type IUser } from "../models/user.models";
 import {
   USER_PROJECTION,
@@ -26,15 +26,41 @@ export const UserService = {
       limit,
       search
     );
-    if (!users) {
-      throw new ApiError(404, "fail to retrieve user list");
-    }
+    
     const totalPage = Math.ceil(totalUser / limit);
     return {
       user: users,
       totalUser,
       totalPage,
       currentPage: page,
+    };
+  },
+
+  getAdminAllUser: async (data: IGetAdminUserQuerySchema) : Promise<{
+    user: IUser[],
+    totalUser: number;
+    totalPage: number;
+    currentPage: number;
+    account_status : any
+  }> => {
+    const {page, limit, search, account_status} = data;
+    logger.debug({ page, limit, search, account_status }, "getAllUser service called");
+    const skip = (page - 1) * limit;
+    const totalUser = await UserRepository.countAllUser(search);
+    const users = await UserRepository.findAllUserAdmin(
+      USER_PROJECTION,
+      skip,
+      limit,
+      search,
+      account_status
+    );
+     const totalPage = Math.ceil(totalUser / limit);
+    return {
+      user: users,
+      totalUser,
+      totalPage,
+      currentPage: page,
+      account_status
     };
   },
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { AuthMiddleware } from "../middlewares/auth.middleware";
-import { meController } from "../controllers/user.controller";
+import { GetAllUserAdminController, meController } from "../controllers/user.controller";
 import {
   GetAllUserController,
   ReactiveUserController,
@@ -19,12 +19,6 @@ userRouter.get("/", GetAllUserController);
 
 userRouter.use(AuthMiddleware);
 
-userRouter.get("/me", meController);
-
-userRouter.use(isAdmin);
-userRouter.put("/:userId/suspend", SuspendedUserController);
-userRouter.put("/:userId/reactive", ReactiveUserController);
-
 // Follow/Unfollow routes
 userRouter.post("/:userId/follow", FollowUserController);
 userRouter.delete("/:userId/unfollow", UnfollowUserController);
@@ -32,5 +26,17 @@ userRouter.delete("/:userId/unfollow", UnfollowUserController);
 // Get Followers/Following routes
 userRouter.get("/:userId/followers", GetUserFollowersController);
 userRouter.get("/:userId/following", GetUserFollowingController);
+
+userRouter.get("/me", meController);
+
+userRouter.use(isAdmin);
+
+// admin routes
+userRouter.get("/admin", GetAllUserAdminController);
+
+userRouter.put("/:userId/suspend", SuspendedUserController);
+userRouter.put("/:userId/reactive", ReactiveUserController);
+
+
 
 export default userRouter;
