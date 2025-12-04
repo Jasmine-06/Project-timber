@@ -56,7 +56,7 @@ const data = {
         },
         {
           title: "Developer Platform",
-          url: "/",
+          url: "/developer",
           icon: Code,
         },
         {

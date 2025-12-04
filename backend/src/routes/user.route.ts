@@ -22,8 +22,8 @@ userRouter.use(AuthMiddleware);
 userRouter.get("/me", meController);
 
 userRouter.use(isAdmin);
-userRouter.patch("/:userId/suspend", SuspendedUserController);
-userRouter.patch("/:userId/reactive", ReactiveUserController);
+userRouter.put("/:userId/suspend", SuspendedUserController);
+userRouter.put("/:userId/reactive", ReactiveUserController);
 
 // Follow/Unfollow routes
 userRouter.post("/:userId/follow", FollowUserController);

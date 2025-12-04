@@ -69,6 +69,35 @@ export const UserRepository = {
     return !!deletedUser;
   },
 
+  createSearchFilter: (search: string) => {
+        if(!search) return {};
+        const searchRegex = new RegExp(search, "i");
+        return {
+            $or: [
+                { name: {$regex: searchRegex} },
+                { username: {$regex: searchRegex} },
+                { email: {$regex: searchRegex} },
+            ]
+        }
+    },
+
+    countAllUser: async (search: string="") : Promise<number> => {
+        const filter = UserRepository.createSearchFilter(search);
+        return await User.countDocuments(filter);
+    },
+
+
+    findAllUser : async (projection?: any, skip?: number, limit?: number, search: string="") : Promise<IUser[]> => {
+        const filter = UserRepository.createSearchFilter(search);
+        let query = User.find(filter, projection);
+        if(skip !== undefined && limit !== undefined) {
+            query = query.skip(skip).limit(limit);
+        } 
+        query = query.sort({createdAt: -1});
+        const users = await query.exec();
+        return users;
+    },
+
   followUser: async (followerId: string, followingId: string) => {
     // Add followingId to follower's following list
     await User.findByIdAndUpdate(followerId, {

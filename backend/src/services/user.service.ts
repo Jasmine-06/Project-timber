@@ -1,6 +1,5 @@
 import { ApiError } from "../advices/ApiError";
-import { AdminRepository } from "../repositories/admin.repository";
-import type { IGetUserQuerySchema } from "../schema/admin.schema";
+import type { IGetUserQuerySchema } from "../schema/user.schema";
 import { AccountStatus, UserRole, type IUser } from "../models/user.models";
 import {
   USER_PROJECTION,
@@ -20,8 +19,8 @@ export const UserService = {
     const { page, limit, search } = data;
     logger.debug({ page, limit, search }, "getAllUser service called");
     const skip = (page - 1) * limit;
-    const totalUser = await AdminRepository.countAllUser(search);
-    const users = await AdminRepository.findAllUser(
+    const totalUser = await UserRepository.countAllUser(search);
+    const users = await UserRepository.findAllUser(
       USER_PROJECTION,
       skip,
       limit,
@@ -42,7 +41,7 @@ export const UserService = {
   suspendUser: async (targetUserId: string): Promise<IUser> => {
     logger.debug({ targetUserId }, "suspendUser service called");
 
-    const updateUser = await AdminRepository.updateUserById(
+    const updateUser = await UserRepository.updateUserById(
       targetUserId,
       { account_status: AccountStatus.SUSPENDED },
       USER_PROJECTION
@@ -61,7 +60,7 @@ export const UserService = {
 
   reactiveUser: async (targetUserId: string): Promise<IUser> => {
     logger.debug({ targetUserId }, "reactiveUser service called");
-    const updateUser = await AdminRepository.updateUserById(
+    const updateUser = await UserRepository.updateUserById(
       targetUserId,
       { account_status: AccountStatus.ACTIVE },
       USER_PROJECTION
