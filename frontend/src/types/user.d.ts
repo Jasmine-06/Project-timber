@@ -32,3 +32,9 @@ interface IReactiveResponse {
   data: IUser;
   message: string;
 }
+
+interface IUserProfile extends IUser {
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+}

@@ -8,6 +8,8 @@ interface IUser {
   is_verified: boolean;
   createdAt: string;
   updatedAt: string;
+  profile_picture?: string;
+  bio?: string;
 }
 
 interface IRegisterResponse {
