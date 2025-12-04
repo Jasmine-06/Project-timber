@@ -8,6 +8,7 @@ import {
   LogIn,
   LogOut,
   Sparkles,
+  User,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -51,6 +52,10 @@ export function NavUser() {
 
   const handleLogin = () => {
     router.push("/login")
+  }
+
+  const handleProfile = () => {
+    router.push("/profile")
   }
 
   // Get initials for avatar fallback
@@ -148,9 +153,9 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem onClick={handleProfile}>
+                <User />
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
