@@ -102,7 +102,7 @@ export const UserRepository = {
     limit?: number,
     search: string = ""
   ): Promise<IUser[]> => {
-    const filter = UserRepository.createSearchFilter(search);
+    const filter = UserRepository.createSearchFilter(search, "active");
     let query = User.find(filter, projection);
     if (skip !== undefined && limit !== undefined) {
       query = query.skip(skip).limit(limit);

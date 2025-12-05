@@ -17,8 +17,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
+import { useState } from 'react'
+import { useDebounce } from '@/hooks/use-debounce'
+import { useSearchUsers } from '@/hooks/use-search-users'
+import { AvatarImage } from "@/components/ui/avatar"
+
 export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+
+  const debouncedSearch = useDebounce(searchQuery, 500)
+  const { users: searchResults, isLoading: isSearching } = useSearchUsers(debouncedSearch)
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -41,7 +51,45 @@ export function SiteHeader() {
             type="search"
             placeholder="Search ChatCom"
             className="w-full bg-muted/50 pl-9 rounded-full focus-visible:ring-0 focus-visible:bg-background transition-colors"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} // Delay to allow click on result
           />
+
+          {/* Search Results Dropdown */}
+          {isSearchFocused && debouncedSearch && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50">
+              {isSearching ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
+              ) : searchResults.length > 0 ? (
+                <div className="py-2">
+                  {searchResults.map((user : IUser) => (
+                    <Link
+                      key={user._id}
+                      href={`/u/${user.username}`}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        setSearchQuery("")
+                        setIsSearchFocused(false)
+                      }}
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.profile_picture} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{user.name}</span>
+                        <span className="text-xs text-muted-foreground">@{user.username}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-sm text-muted-foreground">No users found</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
