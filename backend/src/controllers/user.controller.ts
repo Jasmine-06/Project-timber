@@ -249,19 +249,6 @@ const GetUserFollowingController = asyncHandler(async (req, res) => {
   );
 });
 
-export {
-  meController,
-  GetAllUserController,
-  SuspendedUserController,
-  ReactiveUserController,
-  FollowUserController,
-  UnfollowUserController,
-  GetUserFollowersController,
-  GetUserFollowingController,
-  GetAllUserAdminController,
-  GetUserProfileController,
-  UpdateUserProfileController,
-};
 
 const GetUserProfileController = asyncHandler(async (req, res) => {
   logger.debug({ params: req.params }, "GetUserProfileController request");
@@ -321,3 +308,18 @@ const UpdateUserProfileController = asyncHandler(async (req, res) => {
 
 // page , limit , search ="", account_status="active", "suspended" , "delete"
 // account_status="active", "suspended" , "deleted" ."all"
+
+
+export {
+  meController,
+  GetAllUserController,
+  SuspendedUserController,
+  ReactiveUserController,
+  FollowUserController,
+  UnfollowUserController,
+  GetUserFollowersController,
+  GetUserFollowingController,
+  GetAllUserAdminController,
+  GetUserProfileController,
+  UpdateUserProfileController,
+};
