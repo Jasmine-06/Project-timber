@@ -10,8 +10,6 @@ import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera } from "lucide-react"
 
-import { Progress } from "@/components/ui/progress"
-
 interface EditProfileDialogProps {
   user: IUserProfile;
   onUpdate: () => void;
@@ -24,7 +22,6 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(user.profile_picture);
   const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const { setUser } = useAuthStore();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +41,7 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
       if (file) {
         const formData = new FormData();
         formData.append("images", file);
-        const uploadRes = await UserActions.UploadMediaAction(formData, setUploadProgress);
+        const uploadRes = await UserActions.UploadMediaAction(formData);
         if (uploadRes.images && uploadRes.images.length > 0) {
           profile_picture = uploadRes.images[0];
         }
@@ -71,7 +68,7 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-full font-bold">Edit Profile</Button>
+        <Button variant="outline" className="rounded-lg font-semibold text-sm px-6">Edit Profile</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -98,15 +95,6 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
             <Label htmlFor="bio">Bio</Label>
             <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" />
           </div>
-          {loading && uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="grid gap-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Uploading...</span>
-                    <span>{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-2" />
-            </div>
-          )}
           <DialogFooter>
             <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : "Save changes"}
