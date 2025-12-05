@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react'
 import { Search, Bell, MessageCircle, Plus, User, LogOut, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -16,15 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2">
-        <SidebarTrigger />
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2 font-bold text-xl md:hidden">
           <div className="bg-primary text-primary-foreground p-1 rounded-md">
             <MessageCircle className="size-5" />
