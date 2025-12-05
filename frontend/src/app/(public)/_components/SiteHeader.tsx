@@ -19,7 +19,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function SiteHeader() {
-  const { isAuthenticated, user, setLogout } = useAuthStore()
+  const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4">
@@ -61,7 +61,9 @@ export function SiteHeader() {
         </Button>
 
         <div className="ml-2">
-          {isAuthenticated ? (
+          {isLoading ? (
+            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+          ) : isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
