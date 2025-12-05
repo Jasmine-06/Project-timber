@@ -96,15 +96,27 @@ export const UserActions = {
 
   // Upload media
   UploadMediaAction: async (
-    formData: FormData
+    formData: FormData,
+    onProgress?: (progress: number) => void
   ): Promise<{ images: string[]; videos: string[] }> => {
     const response = await axiosInstance.post<
-      ApiResponse<{ images: string[]; videos: string[] }>
+      ApiResponse<{
+        data: { images: string[]; videos: string[] };
+        message: string;
+      }>
     >("/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
     });
-    return response.data.data!;
+    return response.data.data!.data;
   },
 };
