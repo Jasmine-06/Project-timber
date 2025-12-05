@@ -34,7 +34,21 @@ interface IReactiveResponse {
 }
 
 interface IUserProfile extends IUser {
+  bio?: string;
+  profile_picture?: string;
+  followers_count?: number;
+  following_count?: number;
+  posts_count?: number;
+  is_following?: boolean;
+  is_own_profile?: boolean;
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
+}
+
+interface IUserProfile extends IUser {
   followersCount: number;
   followingCount: number;
   isFollowing: boolean;
+  postsCount?: number;
 }
