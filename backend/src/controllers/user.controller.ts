@@ -1,7 +1,11 @@
 import { ApiError } from "../advices/ApiError";
 import { ApiResponse } from "../advices/ApiResponse";
 import { UserRepository } from "../repositories/user.repository";
-import { GetAdminUserQuerySchema, GetUserQuerySchema } from "../schema/user.schema";
+import {
+  GetAdminUserQuerySchema,
+  GetUserQuerySchema,
+  UserProfileUpdateSchema,
+} from "../schema/user.schema";
 import { UserService } from "../services/user.service";
 import asyncHandler from "../utils/asyncHandler";
 import { zodErrorFormatter } from "../utils/error.formatter";
@@ -48,19 +52,19 @@ const GetAllUserController = asyncHandler(async (req, res) => {
 });
 
 const GetAllUserAdminController = asyncHandler(async (req, res) => {
-   logger.debug({query: req.query},"GetAllUserAdminController request");
+  logger.debug({ query: req.query }, "GetAllUserAdminController request");
 
-   const result = GetAdminUserQuerySchema.safeParse(req.query);
-   if(!result.success) {
-      throw new ApiError(
-        400, 
-        "validation error", 
-        zodErrorFormatter(result.error)
-      );
-   }
-   const paginationParams = result.data;
-   const data = await UserService.getAdminAllUser(paginationParams);
-   res.status(200).json(
+  const result = GetAdminUserQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      "validation error",
+      zodErrorFormatter(result.error)
+    );
+  }
+  const paginationParams = result.data;
+  const data = await UserService.getAdminAllUser(paginationParams);
+  res.status(200).json(
     new ApiResponse({
       data: data.user,
       pagination: {
@@ -68,12 +72,11 @@ const GetAllUserAdminController = asyncHandler(async (req, res) => {
         totalPage: data.totalPage,
         currentPage: data.currentPage,
         limit: paginationParams.limit,
-        account_status: paginationParams.account_status
+        account_status: paginationParams.account_status,
       },
       message: "User list retrieved successfully",
     })
   );
-
 });
 
 const SuspendedUserController = asyncHandler(async (req, res) => {
@@ -246,8 +249,6 @@ const GetUserFollowingController = asyncHandler(async (req, res) => {
   );
 });
 
-
-
 export {
   meController,
   GetAllUserController,
@@ -257,10 +258,66 @@ export {
   UnfollowUserController,
   GetUserFollowersController,
   GetUserFollowingController,
-  GetAllUserAdminController
+  GetAllUserAdminController,
+  GetUserProfileController,
+  UpdateUserProfileController,
 };
 
+const GetUserProfileController = asyncHandler(async (req, res) => {
+  logger.debug({ params: req.params }, "GetUserProfileController request");
+  const { username } = req.params;
 
+  if (!username) {
+    throw new ApiError(400, "Username is required");
+  }
+
+  // Check if user is logged in to determine isFollowing status
+  // req.user might be populated if AuthMiddleware is used, but this route might be public
+  // If we want to support public access but also check following status, we need optional auth middleware
+  // For now, let's assume if req.user exists, we check.
+  const currentUserId = req.user?._id;
+
+  const data = await UserService.getUserProfile(username, currentUserId);
+
+  res.status(200).json(
+    new ApiResponse({
+      data: data,
+      message: "User profile retrieved successfully",
+    })
+  );
+});
+
+const UpdateUserProfileController = asyncHandler(async (req, res) => {
+  logger.debug(
+    { body: req.body, user: req.user },
+    "UpdateUserProfileController request"
+  );
+
+  if (!req.user?._id) {
+    throw new ApiError(401, "Authentication failed");
+  }
+
+  const result = UserProfileUpdateSchema.safeParse(req.body);
+  if (!result.success) {
+    throw new ApiError(
+      400,
+      "Validation Error",
+      zodErrorFormatter(result.error)
+    );
+  }
+
+  const userId = req.user._id;
+  const updateData = result.data;
+
+  const updatedUser = await UserService.updateUserProfile(userId, updateData);
+
+  res.status(200).json(
+    new ApiResponse({
+      data: updatedUser,
+      message: "User profile updated successfully",
+    })
+  );
+});
 
 // page , limit , search ="", account_status="active", "suspended" , "delete"
 // account_status="active", "suspended" , "deleted" ."all"

@@ -26,6 +26,7 @@ export interface IUserCreateSchema {
   communities?: Schema.Types.ObjectId[];
   following?: Schema.Types.ObjectId[];
   followers?: Schema.Types.ObjectId[];
+  profile_picture?: string;
 }
 
 const userSchema = new Schema<IUserCreateSchema>(
@@ -94,6 +95,10 @@ const userSchema = new Schema<IUserCreateSchema>(
       type: [Schema.Types.ObjectId],
       ref: "User",
       default: [],
+    },
+    profile_picture: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

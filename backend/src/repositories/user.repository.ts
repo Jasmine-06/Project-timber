@@ -88,33 +88,46 @@ export const UserRepository = {
     return filter;
   },
 
-    countAllUser: async (search: string="", account_status?: string) : Promise<number> => {
-        const filter = UserRepository.createSearchFilter(search, account_status);
-        return await User.countDocuments(filter);
-    },
+  countAllUser: async (
+    search: string = "",
+    account_status?: string
+  ): Promise<number> => {
+    const filter = UserRepository.createSearchFilter(search, account_status);
+    return await User.countDocuments(filter);
+  },
 
+  findAllUser: async (
+    projection?: any,
+    skip?: number,
+    limit?: number,
+    search: string = ""
+  ): Promise<IUser[]> => {
+    const filter = UserRepository.createSearchFilter(search);
+    let query = User.find(filter, projection);
+    if (skip !== undefined && limit !== undefined) {
+      query = query.skip(skip).limit(limit);
+    }
+    query = query.sort({ createdAt: -1 });
+    const users = await query.exec();
+    return users;
+  },
 
-    findAllUser : async (projection?: any, skip?: number, limit?: number, search: string="") : Promise<IUser[]> => {
-        const filter = UserRepository.createSearchFilter(search);
-        let query = User.find(filter, projection);
-        if(skip !== undefined && limit !== undefined) {
-            query = query.skip(skip).limit(limit);
-        } 
-        query = query.sort({createdAt: -1});
-        const users = await query.exec();
-        return users;
-    },
-
-    findAllUserAdmin : async (projection?: any, skip?: number, limit?: number, search: string="", account_status: string="") : Promise<IUser[]> => {
-       const filter = UserRepository.createSearchFilter(search, account_status);
-       let query = User.find(filter, projection);
-       if(skip !== undefined && limit !== undefined) {
-        query = query.skip(skip).limit(limit);
-       }
-       query = query.sort({createdAt: -1});
-       const users = await query.exec();
-       return users;
-    },
+  findAllUserAdmin: async (
+    projection?: any,
+    skip?: number,
+    limit?: number,
+    search: string = "",
+    account_status: string = ""
+  ): Promise<IUser[]> => {
+    const filter = UserRepository.createSearchFilter(search, account_status);
+    let query = User.find(filter, projection);
+    if (skip !== undefined && limit !== undefined) {
+      query = query.skip(skip).limit(limit);
+    }
+    query = query.sort({ createdAt: -1 });
+    const users = await query.exec();
+    return users;
+  },
 
   followUser: async (followerId: string, followingId: string) => {
     // Add followingId to follower's following list
@@ -187,5 +200,25 @@ export const UserRepository = {
     return await User.countDocuments({
       followers: new mongoose.Types.ObjectId(userId) as any,
     });
+  },
+
+  findUserByUsername: async (username: string) => {
+    return await User.findOne({ username }).select(
+      "-password -verification_code -verification_code_expiry"
+    );
+  },
+
+  updateUser: async (userId: string, updateData: Partial<IUser>) => {
+    return await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    }).select("-password");
+  },
+
+  isFollowing: async (followerId: string, followingId: string) => {
+    const count = await User.countDocuments({
+      _id: followingId,
+      followers: new mongoose.Types.ObjectId(followerId) as any,
+    });
+    return count > 0;
   },
 };
