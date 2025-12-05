@@ -12,17 +12,18 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
-import { 
-  Home, 
-  TrendingUp, 
-  List, 
-  Clock, 
-  Users, 
-  BookOpen, 
-  HelpCircle, 
+import {
+  Home,
+  TrendingUp,
+  List,
+  Clock,
+  Users,
+  BookOpen,
+  HelpCircle,
   MessageCircle,
   Plus,
-  Settings
+  Settings,
+  Leaf
 } from "lucide-react"
 import Link from "next/link"
 
@@ -102,15 +103,15 @@ const resources = [
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 border-b border-sidebar-border flex items-center px-4">
-         <div className="flex items-center gap-2 font-bold text-xl text-sidebar-foreground">
-            <div className="bg-primary text-primary-foreground p-1 rounded-md">
-                <MessageCircle className="size-5" />
-            </div>
-            <span className="group-data-[collapsible=icon]:hidden">ChatCom</span>
-         </div>
+      <SidebarHeader className="h-16 border-b border-sidebar-border flex flex-row items-center justify-start px-6">
+        <div className="flex items-center gap-2 font-bold text-xl text-sidebar-foreground">
+          <div className="bg-black p-1.5 rounded-full border-2 border-emerald-500">
+            <Leaf className="size-5 text-emerald-500" />
+          </div>
+          <span className="group-data-[collapsible=icon]:hidden text-black dark:text-white font-bold text-2xl tracking-tight">Timber</span>
+        </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -127,7 +128,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
+
         <SidebarSeparator />
 
         <SidebarGroup>
