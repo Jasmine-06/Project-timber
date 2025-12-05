@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, MessageCircle, Plus, User, LogOut, Settings } from 'lucide-react'
+import { Search, Bell, MessageCircle, Plus, User, LogOut, Settings, Leaf } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -21,15 +21,17 @@ export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2 font-bold text-xl md:hidden">
-          <div className="bg-primary text-primary-foreground p-1 rounded-md">
-            <MessageCircle className="size-5" />
+          <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex aspect-square size-8 items-center justify-center rounded-full p-[1px]">
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950">
+              <Leaf className="size-4 text-emerald-400" />
+            </div>
           </div>
-          <span>ChatCom</span>
+          <span>Timber</span>
         </div>
       </div>
 

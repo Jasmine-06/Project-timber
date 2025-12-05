@@ -3,90 +3,37 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import {
   Home,
-  TrendingUp,
-  List,
-  Clock,
-  Users,
-  BookOpen,
+  Info,
+  Code,
   HelpCircle,
-  MessageCircle,
-  Plus,
-  Settings,
+  Users,
+  FileText,
+  Shield,
+  ScrollText,
   Leaf
 } from "lucide-react"
 import Link from "next/link"
 
-// Menu items.
-const feeds = [
+// All menu items in a single clean list - optimized order
+const menuItems = [
   {
     title: "Home",
     url: "/",
     icon: Home,
   },
   {
-    title: "Popular",
-    url: "/popular",
-    icon: TrendingUp,
-  },
-  {
-    title: "All",
-    url: "/all",
-    icon: List,
-  },
-]
-
-const recent = [
-  {
-    title: "r/javascript",
-    url: "/r/javascript",
-    icon: MessageCircle,
-  },
-  {
-    title: "r/reactjs",
-    url: "/r/reactjs",
-    icon: MessageCircle,
-  },
-  {
-    title: "r/webdev",
-    url: "/r/webdev",
-    icon: MessageCircle,
-  },
-]
-
-const communities = [
-  {
-    title: "Create Community",
-    url: "/create-community",
-    icon: Plus,
-  },
-  {
-    title: "r/programming",
-    url: "/r/programming",
-    icon: MessageCircle,
-  },
-  {
-    title: "r/technology",
-    url: "/r/technology",
-    icon: MessageCircle,
-  },
-]
-
-const resources = [
-  {
-    title: "About",
-    url: "/about",
-    icon: BookOpen,
+    title: "Communities",
+    url: "/communities",
+    icon: Users,
   },
   {
     title: "Help",
@@ -94,92 +41,62 @@ const resources = [
     icon: HelpCircle,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    title: "About Timber",
+    url: "/about",
+    icon: Info,
+  },
+  {
+    title: "Developer Platform",
+    url: "/developer",
+    icon: Code,
+  },
+  {
+    title: "Timber Rules",
+    url: "/rules",
+    icon: FileText,
+  },
+  {
+    title: "Privacy Policy",
+    url: "/privacy",
+    icon: Shield,
+  },
+  {
+    title: "User Agreement",
+    url: "/user-agreement",
+    icon: ScrollText,
   },
 ]
 
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 border-b border-sidebar-border flex flex-row items-center justify-start px-6">
-        <div className="flex items-center gap-2 font-bold text-xl text-sidebar-foreground">
-          <div className="bg-black p-1.5 rounded-full border-2 border-emerald-500">
-            <Leaf className="size-5 text-emerald-500" />
-          </div>
-          <span className="group-data-[collapsible=icon]:hidden text-black dark:text-white font-bold text-2xl tracking-tight">Timber</span>
-        </div>
+      <SidebarHeader className="h-16 border-b border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild className="hover:bg-transparent hover:text-sidebar-foreground data-[state=open]:bg-transparent">
+              <div className="cursor-default">
+                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex aspect-square size-8 items-center justify-center rounded-full p-[1px] shrink-0">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950">
+                    <Leaf className="size-4 text-emerald-400" />
+                  </div>
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight overflow-hidden">
+                  <span className="truncate font-semibold">Timber</span>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {feeds.map((item) => (
+              {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title} className="text-[15px] font-normal py-2.5">
                     <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Recent</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {recent.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Communities</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {communities.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Resources</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {resources.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon />
+                      <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
