@@ -9,6 +9,8 @@ import { useAuthStore } from "@/store/auth-store"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { useRouter } from "next/navigation"
 
 interface EditProfileDialogProps {
   user: IUserProfile;
@@ -16,12 +18,15 @@ interface EditProfileDialogProps {
 }
 
 export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(user.name);
+  const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio || "");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(user.profile_picture);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { setUser } = useAuthStore();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,13 +40,14 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setUploadProgress(0);
     try {
       let profile_picture = user.profile_picture;
 
       if (file) {
         const formData = new FormData();
         formData.append("images", file);
-        const uploadRes = await UserActions.UploadMediaAction(formData);
+        const uploadRes = await UserActions.UploadMediaAction(formData, setUploadProgress);
         if (uploadRes.images && uploadRes.images.length > 0) {
           profile_picture = uploadRes.images[0];
         }
@@ -49,19 +55,28 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
 
       const updatedUser = await UserActions.UpdateUserProfileAction({
         name,
+        username,
         bio,
         profile_picture,
       });
 
       setUser(updatedUser); // Update store
-      onUpdate(); // Refresh parent
+      
+      if (updatedUser.username !== user.username) {
+        toast.success("Profile updated. Redirecting to new username...");
+        router.push(`/u/${updatedUser.username}`);
+      } else {
+        onUpdate(); // Refresh parent
+        toast.success("Profile updated successfully");
+      }
+      
       setOpen(false);
-      toast.success("Profile updated successfully");
     } catch (error) {
       console.error(error);
       toast.error("Failed to update profile");
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -92,9 +107,24 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="bio">Bio</Label>
             <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" />
           </div>
+
+          {loading && uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="grid gap-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Uploading image...</span>
+                    <span>{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="submit" disabled={loading}>
                 {loading ? "Saving..." : "Save changes"}

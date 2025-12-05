@@ -96,8 +96,12 @@ export default function UserProfilePage() {
           {/* Avatar */}
           <div className="flex justify-center md:justify-start shrink-0">
             <Avatar className="h-36 w-36 md:h-44 md:w-44 ring-1 ring-border">
-              <AvatarImage src={profile.profile_picture || ""} alt={profile.name} />
-              <AvatarFallback className="text-4xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white font-medium">
+              <AvatarImage 
+                src={profile.profile_picture || ""} 
+                alt={profile.name} 
+                className="object-cover h-full w-full"
+              />
+              <AvatarFallback className="flex items-center justify-center w-full h-full text-4xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white font-medium">
                 {profile.name ? getInitials(profile.name) : "U"}
               </AvatarFallback>
             </Avatar>
