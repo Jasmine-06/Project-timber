@@ -61,12 +61,15 @@ export function SiteHeader() {
 
           {/* Search Results Dropdown */}
           {isSearchFocused && debouncedSearch && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50">
+            <div 
+              className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50"
+              onMouseDown={(e) => e.preventDefault()} // Prevent input blur when clicking inside dropdown
+            >
               {isSearching ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
               ) : searchResults.length > 0 ? (
                 <div className="py-2">
-                  {searchResults.map((user : IUser) => (
+                  {searchResults.map((user: IUser) => (
                     <Link
                       key={user._id}
                       href={`/u/${user.username}`}
@@ -118,8 +121,8 @@ export function SiteHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    {/* <AvatarImage src={user?.image} alt={user?.name || "User"} /> */}
-                    <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage src={user?.profile_picture} alt={user?.name || "User"} />
+                    <AvatarFallback>{user?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -144,7 +147,7 @@ export function SiteHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild className="rounded-full bg-[#EA4300] hover:bg-[#EA4300]/90 text-white font-semibold">
+            <Button asChild className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               <Link href="/login">
                 Log In
               </Link>

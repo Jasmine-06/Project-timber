@@ -39,7 +39,7 @@ export function RightSidebar() {
             <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-orange-500" />
                 <div className="flex flex-col">
-                    <span className="text-xs font-bold">ChatCom Premium</span>
+                    <span className="text-xs font-bold">Timber Premium</span>
                     <span className="text-xs text-muted-foreground">The best ChatCom experience</span>
                 </div>
             </div>

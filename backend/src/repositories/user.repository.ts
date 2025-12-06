@@ -13,6 +13,8 @@ export const USER_PROJECTION = {
   is_verified: 1,
   roles: 1,
   account_status: 1,
+  profile_picture: 1,
+  bio: 1,
   createdAt: 1,
   updatedAt: 1,
 };
@@ -176,7 +178,7 @@ export const UserRepository = {
     return await User.find({
       following: new mongoose.Types.ObjectId(userId) as any,
     })
-      .select("name username email bio")
+      .select("name username email bio profile_picture")
       .skip(skip)
       .limit(limit);
   },
@@ -191,7 +193,7 @@ export const UserRepository = {
     return await User.find({
       followers: new mongoose.Types.ObjectId(userId) as any,
     })
-      .select("name username email bio")
+      .select("name username email bio profile_picture")
       .skip(skip)
       .limit(limit);
   },
