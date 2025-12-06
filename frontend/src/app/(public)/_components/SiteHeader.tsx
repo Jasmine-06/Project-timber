@@ -21,11 +21,13 @@ import { useState } from 'react'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useSearchUsers } from '@/hooks/use-search-users'
 import { AvatarImage } from "@/components/ui/avatar"
+import { CreatePostDialog } from './CreatePostDialog'
 
 export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
 
   const debouncedSearch = useDebounce(searchQuery, 500)
   const { users: searchResults, isLoading: isSearching } = useSearchUsers(debouncedSearch)
@@ -103,7 +105,12 @@ export function SiteHeader() {
         <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground">
           <Search className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="hidden sm:flex text-muted-foreground">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="hidden sm:flex text-muted-foreground"
+          onClick={() => setIsCreatePostOpen(true)}
+        >
           <Plus className="h-5 w-5" />
         </Button>
         <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -155,6 +162,8 @@ export function SiteHeader() {
           )}
         </div>
       </div>
+
+      <CreatePostDialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen} />
     </header>
   )
 }
