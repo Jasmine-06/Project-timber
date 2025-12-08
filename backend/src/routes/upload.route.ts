@@ -1,8 +1,11 @@
 import { Router, type RequestHandler } from "express";
 import { upload } from "../middlewares/upload.middleware";
 import { uploadMedia } from "../controllers/upload.controller";
+import { AuthMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
+
+router.use(AuthMiddleware)
 
 router.post(
   "/",

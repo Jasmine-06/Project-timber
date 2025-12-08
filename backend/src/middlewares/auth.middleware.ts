@@ -67,3 +67,32 @@ export const AuthMiddleware = (
       );
   }
 };
+
+export const OptionalAuthMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+    const cookieToken = req.cookies?.accessToken; // Safely access cookies
+    let token: string | null = null;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    } else if (cookieToken) {
+      token = cookieToken;
+    }
+
+    if (token) {
+      const user = verifyAccessToken(token);
+      if (user) {
+        req.user = user;
+      }
+    }
+    next();
+  } catch (error) {
+    // If error occurs (e.g. invalid token format), just proceed without user
+    logger.error(error, "OptionalAuthMiddleware error (ignoring)");
+    next();
+  }
+};

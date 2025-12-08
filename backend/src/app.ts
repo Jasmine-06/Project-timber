@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.route";
 import userRouter from "./routes/user.route";
 import uploadRouter from "./routes/upload.route";
 import communityRouter from "./routes/community.route";
+import postRouter from "./routes/post.route";
 import logger from "./utils/logger";
 
 const app = express();
@@ -43,6 +44,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/community", communityRouter);
+app.use("/api/v1/post", postRouter);
 app.use(errorMiddleware);
 
 export default app;

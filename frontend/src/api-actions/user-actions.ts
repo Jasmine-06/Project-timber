@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios-interceptor";
-import { IGetUserQuerySchema } from "@/schema/auth.schema";
+import { IGetUserQuerySchema, IGetAdminUserQuerySchema } from "@/schema/auth.schema";
 
 export const UserActions = {
   // Get current authenticated user
@@ -14,6 +14,19 @@ export const UserActions = {
   ): Promise<IGetAllUserResponse> => {
     const response = await axiosInstance.get<ApiResponse<IGetAllUserResponse>>(
       "/user/",
+      {
+        params,
+      }
+    );
+    return response.data.data!;
+  },
+
+  // Admin: Get all users with pagination, search, and account_status filter
+  GetAllUsersAdminAction: async (
+    params?: IGetAdminUserQuerySchema
+  ): Promise<IGetAllUserResponse> => {
+    const response = await axiosInstance.get<ApiResponse<IGetAllUserResponse>>(
+      "/user/admin",
       {
         params,
       }
@@ -96,15 +109,36 @@ export const UserActions = {
 
   // Upload media
   UploadMediaAction: async (
-    formData: FormData
+    formData: FormData,
+    onProgress?: (progress: number) => void
   ): Promise<{ images: string[]; videos: string[] }> => {
     const response = await axiosInstance.post<
-      ApiResponse<{ images: string[]; videos: string[] }>
+      ApiResponse<{
+        data: {
+          images: { secure_url: string }[];
+          videos: { secure_url: string }[];
+        };
+        message: string;
+      }>
     >("/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
     });
-    return response.data.data!;
+
+    // Map the response to extract secure_url strings
+    const result = response.data.data!.data;
+    return {
+      images: result.images.map((img: any) => img.secure_url),
+      videos: result.videos.map((vid: any) => vid.secure_url),
+    };
   },
 };

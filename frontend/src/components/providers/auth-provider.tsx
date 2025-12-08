@@ -6,25 +6,33 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 export default function AuthProvider({ children} : {children: React.ReactNode}) {
-    const {setLogin, setLogout , setUser} = useAuthStore(); 
+    const { isAuthenticated, setLogout , setUser, setLoading} = useAuthStore(); 
     const {data , isLoading, isError, error} = useQuery({
         queryKey: ["current_user"],
         queryFn: () => UserActions.GetCurrentUserAction(),
         refetchOnWindowFocus: false,
         retry: false,
+        enabled: isAuthenticated,
+        staleTime: 1000 * 60 * 5,
     });
 
     useEffect(() => {
         if(!isLoading && data) {
             setUser(data)
         }
-    }, [data, isLoading])
+    }, [data, isLoading, setUser])
 
     useEffect(() => {
         if(error && isError) {
             setLogout();
         }
-    }, [error, isError])
+    }, [error, isError, setLogout])
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setLoading(false)
+        }
+    }, [isAuthenticated, setLoading])
 
     return (
         <>

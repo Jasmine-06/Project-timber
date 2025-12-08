@@ -1,5 +1,8 @@
 import { ApiError } from "../advices/ApiError";
-import type { IGetAdminUserQuerySchema, IGetUserQuerySchema } from "../schema/user.schema";
+import type {
+  IGetAdminUserQuerySchema,
+  IGetUserQuerySchema,
+} from "../schema/user.schema";
 import { AccountStatus, UserRole, type IUser } from "../models/user.models";
 import {
   USER_PROJECTION,
@@ -26,7 +29,7 @@ export const UserService = {
       limit,
       search
     );
-    
+
     const totalPage = Math.ceil(totalUser / limit);
     return {
       user: users,
@@ -36,15 +39,20 @@ export const UserService = {
     };
   },
 
-  getAdminAllUser: async (data: IGetAdminUserQuerySchema) : Promise<{
-    user: IUser[],
+  getAdminAllUser: async (
+    data: IGetAdminUserQuerySchema
+  ): Promise<{
+    user: IUser[];
     totalUser: number;
     totalPage: number;
     currentPage: number;
-    account_status : any
+    account_status: any;
   }> => {
-    const {page, limit, search, account_status} = data;
-    logger.debug({ page, limit, search, account_status }, "getAllUser service called");
+    const { page, limit, search, account_status } = data;
+    logger.debug(
+      { page, limit, search, account_status },
+      "getAllUser service called"
+    );
     const skip = (page - 1) * limit;
     const totalUser = await UserRepository.countAllUser(search);
     const users = await UserRepository.findAllUserAdmin(
@@ -54,33 +62,41 @@ export const UserService = {
       search,
       account_status
     );
-     const totalPage = Math.ceil(totalUser / limit);
+    const totalPage = Math.ceil(totalUser / limit);
     return {
       user: users,
       totalUser,
       totalPage,
       currentPage: page,
-      account_status
+      account_status,
     };
   },
 
   suspendUser: async (targetUserId: string): Promise<IUser> => {
     logger.debug({ targetUserId }, "suspendUser service called");
 
+    // First, fetch the user to check their role
+    const user = await UserRepository.findUserById(targetUserId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Check if user is admin BEFORE updating
+    if (user.roles.includes(UserRole.ADMIN)) {
+      throw new ApiError(400, "An admin can't be suspended");
+    }
+
+    // Only update if user is not an admin
     const updateUser = await UserRepository.updateUserById(
       targetUserId,
       { account_status: AccountStatus.SUSPENDED },
       USER_PROJECTION
     );
+    
     if (!updateUser) {
-      throw new ApiError(404, "user not found or update failed");
+      throw new ApiError(404, "User not found or update failed");
     }
-    if (
-      updateUser.roles.includes(UserRole.ADMIN) &&
-      updateUser.account_status === AccountStatus.SUSPENDED
-    ) {
-      throw new ApiError(400, "An admin can't be suspended");
-    }
+
     return updateUser;
   },
 
@@ -163,5 +179,49 @@ export const UserService = {
       totalPage,
       currentPage: page,
     };
+  },
+
+  getUserProfile: async (username: string, currentUserId?: string) => {
+    logger.debug({ username }, "UserService.getUserProfile called");
+    const user = await UserRepository.findUserByUsername(username);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const followersCount = await UserRepository.countFollowers(
+      user._id.toString()
+    );
+    const followingCount = await UserRepository.countFollowing(
+      user._id.toString()
+    );
+
+    let isFollowing = false;
+    if (currentUserId) {
+      isFollowing = await UserRepository.isFollowing(
+        currentUserId,
+        user._id.toString()
+      );
+    }
+
+    return {
+      ...user.toObject(),
+      followersCount,
+      followingCount,
+      isFollowing,
+    };
+  },
+
+  updateUserProfile: async (userId: string, updateData: any) => {
+    logger.debug(
+      { userId, updateData },
+      "UserService.updateUserProfile called"
+    );
+
+    // updateData is already validated by Zod in controller
+    const updatedUser = await UserRepository.updateUser(userId, updateData);
+    if (!updatedUser) {
+      throw new ApiError(404, "User not found");
+    }
+    return updatedUser;
   },
 };

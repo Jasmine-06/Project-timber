@@ -119,7 +119,7 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Override browser autofill styles for light theme */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
