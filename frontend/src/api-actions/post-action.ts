@@ -11,16 +11,16 @@ import {
 export const PostActions = {
   // Get all posts (public)
   GetAllPostsAction: async (): Promise<IPost[]> => {
-    const response = await axiosInstance.get<ApiResponse<IPost[]>>("/post");
-    return response.data.data!;
+    const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], total: number, page: number, limit: number }>>("/post");
+    return response.data.data!.posts;
   },
 
   // Get posts by username (public)
   GetPostsByUsernameAction: async (username: string): Promise<IPost[]> => {
-    const response = await axiosInstance.get<ApiResponse<IPost[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], total: number, page: number, limit: number }>>(
       `/post/user/${username}`
     );
-    return response.data.data!;
+    return response.data.data!.posts;
   },
 
   // Get post by ID (public)

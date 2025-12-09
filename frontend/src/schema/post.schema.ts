@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const CreatePostSchema = z.object({
     caption: z.string().max(2000, "Caption must be less than 2000 characters").optional(),
-    images: z.array(z.any()).optional(),
+    images: z.array(z.string()).optional(),
 });
 
 const UpdatePostSchema = z.object({

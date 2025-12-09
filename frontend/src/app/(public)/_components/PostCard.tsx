@@ -3,6 +3,8 @@ import React, { useState } from 'react'
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useToggleLike } from '@/hooks/use-toggle-like'
+import { useToggleBookmark } from '@/hooks/use-toggle-bookmark'
 
 interface PostCardProps {
   postId: string
@@ -39,14 +41,47 @@ export function PostCard({
   const [bookmarked, setBookmarked] = useState(isBookmarked)
   const [likes, setLikes] = useState(likesCount)
 
+  // TanStack Query mutations
+  const toggleLikeMutation = useToggleLike()
+  const toggleBookmarkMutation = useToggleBookmark()
+
   const handleLike = () => {
-    setLiked(!liked)
-    setLikes(liked ? likes - 1 : likes + 1)
+    // Optimistic update
+    const newLikedState = !liked
+    setLiked(newLikedState)
+    setLikes(newLikedState ? likes + 1 : likes - 1)
+
+    // Call API
+    toggleLikeMutation.mutate(
+      { post_id: postId },
+      {
+        onError: () => {
+          // Revert on error
+          setLiked(!newLikedState)
+          setLikes(newLikedState ? likes - 1 : likes + 1)
+        }
+      }
+    )
+
     onLike?.()
   }
 
   const handleBookmark = () => {
-    setBookmarked(!bookmarked)
+    // Optimistic update
+    const newBookmarkedState = !bookmarked
+    setBookmarked(newBookmarkedState)
+
+    // Call API
+    toggleBookmarkMutation.mutate(
+      { post_id: postId },
+      {
+        onError: () => {
+          // Revert on error
+          setBookmarked(!newBookmarkedState)
+        }
+      }
+    )
+
     onBookmark?.()
   }
 

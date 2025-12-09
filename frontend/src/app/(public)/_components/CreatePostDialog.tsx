@@ -14,6 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAuthStore } from '@/store/auth-store'
 import FileUpload from '@/components/kokonutui/file-upload'
+import { useCreatePost } from '@/hooks/use-create-post'
+import { useUploadMedia } from '@/hooks/use-upload-media'
 
 interface CreatePostDialogProps {
   open: boolean
@@ -25,6 +27,11 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
   const [caption, setCaption] = useState("")
   const [images, setImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [uploadProgress, setUploadProgress] = useState(0)
+
+  // TanStack Query mutations
+  const createPostMutation = useCreatePost()
+  const uploadMediaMutation = useUploadMedia()
 
   const handleFileUpload = (file: File) => {
     setImages(prev => [...prev, file])
@@ -42,12 +49,43 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
   }
 
   const handleSubmit = async () => {
-    console.log({ caption, images })
-    setCaption("")
-    setImages([])
-    setPreviewUrls([])
-    onOpenChange(false)
+    try {
+      let imageUrls: string[] = []
+
+      // Step 1: Upload images if any exist
+      if (images.length > 0) {
+        const formData = new FormData()
+        images.forEach(image => {
+          formData.append('images', image)
+        })
+
+        const uploadResult = await uploadMediaMutation.mutateAsync({
+          formData,
+          onProgress: setUploadProgress
+        })
+        imageUrls = uploadResult.images
+      }
+
+      // Step 2: Create post with caption and uploaded image URLs
+      await createPostMutation.mutateAsync({
+        caption: caption || undefined,
+        images: imageUrls.length > 0 ? imageUrls : undefined
+      })
+
+      // Step 3: Clear form and close dialog on success
+      setCaption("")
+      setImages([])
+      setPreviewUrls([])
+      setUploadProgress(0)
+      onOpenChange(false)
+    } catch (error) {
+      // Errors are handled by the mutation hooks
+      console.error('Error creating post:', error)
+    }
   }
+
+  const isLoading = uploadMediaMutation.isPending || createPostMutation.isPending
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,7 +120,8 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
                   placeholder="What is happening?!"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  className="min-h-[120px] resize-none border-0 focus-visible:ring-0 p-0 text-xl text-foreground placeholder:text-muted-foreground bg-transparent rounded-none overflow-y-auto break-all whitespace-pre-wrap overflow-x-hidden"
+                  disabled={isLoading}
+                  className="min-h-[120px] resize-none border-0 focus-visible:ring-0 p-0 text-xl text-foreground placeholder:text-muted-foreground bg-transparent rounded-none overflow-y-auto break-all whitespace-pre-wrap overflow-x-hidden disabled:opacity-50"
                   maxLength={2000}
                 />
 
@@ -147,7 +186,8 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary"
+                disabled={isLoading}
+                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary disabled:opacity-50"
                 onClick={() => {
                   const input = document.createElement('input')
                   input.type = 'file'
@@ -165,44 +205,6 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
                 }}
               >
                 <ImageIcon className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-                  <path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v13c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-13c0-.276-.224-.5-.5-.5h-13zM18 10.711V9.25h-3.74v5.5h1.44v-1.719h1.7V11.57h-1.7v-.859H18zM11.79 9.25h1.44v5.5h-1.44v-5.5zm-3.07 1.375c.34 0 .77.172 1.02.43l1.03-.86c-.51-.601-1.28-.945-2.05-.945C7.19 9.25 6 10.453 6 12s1.19 2.75 2.72 2.75c.85 0 1.54-.344 2.05-.945v-2.149H8.38v1.032H9.4v.515c-.17.086-.42.172-.68.172-.76 0-1.36-.602-1.36-1.375 0-.688.6-1.375 1.36-1.375z"></path>
-                </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary"
-              >
-                <BarChart3 className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary"
-              >
-                <Smile className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary"
-              >
-                <Calendar className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full hover:bg-primary/10 text-primary opacity-50"
-                disabled
-              >
-                <MapPin className="h-5 w-5" />
               </Button>
             </div>
 
@@ -241,11 +243,21 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
 
               <Button
                 onClick={handleSubmit}
-                disabled={!caption && images.length === 0}
+                disabled={(!caption && images.length === 0) || isLoading}
                 size="sm"
                 className="bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground font-bold rounded-full px-4 h-9"
               >
-                Post
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {uploadMediaMutation.isPending ? 'Uploading...' : 'Posting...'}
+                  </span>
+                ) : (
+                  'Post'
+                )}
               </Button>
             </div>
           </div>
