@@ -53,6 +53,34 @@ export const PostService = {
       totalPosts = await PostRepository.countAllPosts();
     }
 
+    // If user is authenticated, append isLiked, isBookmarked, and userComment
+    if (userId && posts.length > 0) {
+      const postIds = posts.map((post: any) => String(post._id));
+
+      // Batch fetch user interactions
+      const [likedPostIds, bookmarkedPostIds, userCommentsMap] =
+        await Promise.all([
+          PostRepository.findUserLikesForPosts(postIds, userId),
+          PostRepository.findUserBookmarksForPosts(postIds, userId),
+          PostRepository.findUserCommentsForPosts(postIds, userId),
+        ]);
+
+      // Create sets for O(1) lookup
+      const likedSet = new Set(likedPostIds);
+      const bookmarkedSet = new Set(bookmarkedPostIds);
+
+      // Append interaction data to each post
+      posts = posts.map((post: any) => {
+        const postId = String(post._id);
+        return {
+          ...post,
+          isLiked: likedSet.has(postId),
+          isBookmarked: bookmarkedSet.has(postId),
+          userComment: userCommentsMap[postId] || null,
+        };
+      });
+    }
+
     const totalPage = Math.ceil(totalPosts / limit);
 
     return {

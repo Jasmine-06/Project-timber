@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { UploadActions } from "@/api-actions/upload-actions"
 import { UserActions } from "@/api-actions/user-actions"
 import { useAuthStore } from "@/store/auth-store"
 import { toast } from "sonner"
@@ -47,7 +48,7 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
       if (file) {
         const formData = new FormData();
         formData.append("images", file);
-        const uploadRes = await UserActions.UploadMediaAction(formData, setUploadProgress);
+        const uploadRes = await UploadActions.UploadMediaAction(formData, setUploadProgress);
         if (uploadRes.images && uploadRes.images.length > 0) {
           profile_picture = uploadRes.images[0];
         }
@@ -61,7 +62,7 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
       });
 
       setUser(updatedUser); // Update store
-      
+
       if (updatedUser.username !== user.username) {
         toast.success("Profile updated. Redirecting to new username...");
         router.push(`/u/${updatedUser.username}`);
@@ -69,7 +70,7 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
         onUpdate(); // Refresh parent
         toast.success("Profile updated successfully");
       }
-      
+
       setOpen(false);
     } catch (error) {
       console.error(error);
@@ -91,16 +92,16 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="flex flex-col items-center gap-4">
-             <div className="relative">
-                <Avatar className="h-24 w-24">
-                    <AvatarImage src={preview} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
-                </Avatar>
-                <Label htmlFor="picture" className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1.5 rounded-full cursor-pointer hover:bg-primary/90">
-                    <Camera className="h-4 w-4" />
-                    <Input id="picture" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                </Label>
-             </div>
+            <div className="relative">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={preview} />
+                <AvatarFallback>{user.name[0]}</AvatarFallback>
+              </Avatar>
+              <Label htmlFor="picture" className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1.5 rounded-full cursor-pointer hover:bg-primary/90">
+                <Camera className="h-4 w-4" />
+                <Input id="picture" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              </Label>
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
@@ -117,17 +118,17 @@ export function EditProfileDialog({ user, onUpdate }: EditProfileDialogProps) {
 
           {loading && uploadProgress > 0 && uploadProgress < 100 && (
             <div className="grid gap-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Uploading image...</span>
-                    <span>{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Uploading image...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
             </div>
           )}
 
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save changes"}
+              {loading ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,8 +1,10 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useToggleLike } from '@/hooks/use-toggle-like'
+import { useToggleBookmark } from '@/hooks/use-toggle-bookmark'
 
 interface PostCardProps {
   postId: string
@@ -15,6 +17,7 @@ interface PostCardProps {
   commentsCount: number
   isLiked?: boolean
   isBookmarked?: boolean
+  userComment?: IComment | null
   onLike?: () => void
   onComment?: () => void
   onBookmark?: () => void
@@ -31,6 +34,7 @@ export function PostCard({
   commentsCount,
   isLiked = false,
   isBookmarked = false,
+  userComment,
   onLike,
   onComment,
   onBookmark,
@@ -39,14 +43,60 @@ export function PostCard({
   const [bookmarked, setBookmarked] = useState(isBookmarked)
   const [likes, setLikes] = useState(likesCount)
 
+  // Sync local state with props when they change (e.g., from cache updates)
+  useEffect(() => {
+    setLiked(isLiked)
+  }, [isLiked])
+
+  useEffect(() => {
+    setBookmarked(isBookmarked)
+  }, [isBookmarked])
+
+  useEffect(() => {
+    setLikes(likesCount)
+  }, [likesCount])
+
+  // TanStack Query mutations
+  const toggleLikeMutation = useToggleLike()
+  const toggleBookmarkMutation = useToggleBookmark()
+
   const handleLike = () => {
-    setLiked(!liked)
-    setLikes(liked ? likes - 1 : likes + 1)
+    // Optimistic update
+    const newLikedState = !liked
+    setLiked(newLikedState)
+    setLikes(newLikedState ? likes + 1 : likes - 1)
+
+    // Call API
+    toggleLikeMutation.mutate(
+      { post_id: postId },
+      {
+        onError: () => {
+          // Revert on error
+          setLiked(!newLikedState)
+          setLikes(newLikedState ? likes - 1 : likes + 1)
+        }
+      }
+    )
+
     onLike?.()
   }
 
   const handleBookmark = () => {
-    setBookmarked(!bookmarked)
+    // Optimistic update
+    const newBookmarkedState = !bookmarked
+    setBookmarked(newBookmarkedState)
+
+    // Call API
+    toggleBookmarkMutation.mutate(
+      { post_id: postId },
+      {
+        onError: () => {
+          // Revert on error
+          setBookmarked(!newBookmarkedState)
+        }
+      }
+    )
+
     onBookmark?.()
   }
 
@@ -134,6 +184,14 @@ export function PostCard({
           <div className="text-sm mb-1">
             <span className="font-semibold mr-1.5">{username}</span>
             <span className="whitespace-pre-wrap">{caption}</span>
+          </div>
+        )}
+
+        {/* User's Comment */}
+        {userComment && (
+          <div className="text-sm mb-1.5 bg-muted/30 rounded-md px-2 py-1.5">
+            <span className="font-semibold mr-1.5 text-primary">You</span>
+            <span className="whitespace-pre-wrap">{userComment.content}</span>
           </div>
         )}
 

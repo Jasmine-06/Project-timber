@@ -1,58 +1,98 @@
+'use client'
+
 import React from 'react'
 import { PostCard } from './_components/PostCard'
 import { RightSidebar } from './_components/RightSidebar'
+import { useGetPosts } from '@/hooks/use-get-posts'
+import { useAuthStore } from '@/store/auth-store'
+import { Loader2 } from 'lucide-react'
 
-export default function page() {
+export default function Page() {
+  const { data: posts, isLoading, isError, error } = useGetPosts()
+  const { user } = useAuthStore()
+
   return (
     <div className="flex gap-8 justify-center">
       {/* Main Feed */}
       <div className="flex flex-col w-full md:max-w-[640px]">
-        <PostCard 
-          postId="1"
-          username="fashionista"
-          userAvatar="https://i.pravatar.cc/150?img=47"
-          timeAgo="15m"
-          caption="Feeling confident in this look 💫 Sometimes the simplest outfits make the biggest statement. What's your go-to style? #OOTD #Fashion #Style"
-          images={["https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&h=750&fit=crop"]}
-          likesCount={1523}
-          commentsCount={42}
-        />
-        <PostCard 
-          postId="2"
-          username="urbanexplorer"
-          userAvatar="https://i.pravatar.cc/150?img=33"
-          timeAgo="2h"
-          caption="City lights and late nights 🌃 There's something magical about the urban landscape after dark. Where's your favorite city to explore? #CityLife #UrbanPhotography #NightVibes"
-          images={["https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=600&h=750&fit=crop"]}
-          likesCount={2847}
-          commentsCount={156}
-          isLiked={true}
-        />
-        <PostCard 
-          postId="3"
-          username="fitnessmotivation"
-          userAvatar="https://i.pravatar.cc/150?img=28"
-          timeAgo="4h"
-          caption="Progress over perfection 💪 Every workout counts, every rep matters. Keep pushing! #Fitness #Motivation #GymLife #HealthyLiving"
-          images={["https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=750&fit=crop"]}
-          likesCount={3421}
-          commentsCount={89}
-          isBookmarked={true}
-        />
-        <PostCard 
-          postId="4"
-          username="foodiedelight"
-          userAvatar="https://i.pravatar.cc/150?img=52"
-          timeAgo="6h"
-          caption="Brunch goals achieved ☕🥐 Nothing beats a lazy Sunday morning with good food and great company. What's your favorite brunch spot? #Foodie #Brunch #FoodPhotography"
-          images={["https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=750&fit=crop"]}
-          likesCount={892}
-          commentsCount={34}
-        />
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {isError && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-destructive font-semibold mb-2">Failed to load posts</p>
+              <p className="text-sm text-muted-foreground">
+                {error?.message || 'Please try again later'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !isError && posts && posts.length === 0 && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-muted-foreground">No posts yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Be the first to share something!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !isError && posts && posts.length > 0 && (
+          <>
+            {posts.map((post) => {
+              // user_id can be a string or populated IUser object
+              const author = typeof post.user_id === 'string' ? null : post.user_id
+              
+              return (
+                <PostCard
+                  key={post._id}
+                  postId={post._id}
+                  username={author?.username || 'Unknown'}
+                  userAvatar={author?.profile_picture}
+                  timeAgo={formatTimeAgo(post.createdAt)}
+                  caption={post.caption}
+                  images={post.images || []}
+                  likesCount={post.likes?.length || 0}
+                  commentsCount={post.comments?.length || 0}
+                  isLiked={post.isLiked || false}
+                  isBookmarked={post.isBookmarked || false}
+                  userComment={post.userComment}
+                />
+              )
+            })}
+          </>
+        )}
       </div>
 
       {/* Right Sidebar */}
       <RightSidebar />
     </div>
   )
+}
+
+// Helper function to format time ago
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return `${weeks}w`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${months}mo`
+  const years = Math.floor(days / 365)
+  return `${years}y`
 }

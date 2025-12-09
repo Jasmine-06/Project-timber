@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { UserActions } from '@/api-actions/user-actions'
 import { useAuthStore } from '@/store/auth-store'
@@ -8,37 +8,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Grid3x3, Bookmark } from "lucide-react"
 import { EditProfileDialog } from '../_components/EditProfileDialog'
+import { FollowersDialog } from '../../_components/FollowersDialog'
+import { FollowingDialog } from '../../_components/FollowingDialog'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { useGetUserProfile } from '@/hooks/use-get-user-profile'
+import { useQueryClient } from '@tanstack/react-query'
+import { useGetPostsByUsername } from '@/hooks/use-get-posts-by-username'
+import { useGetFollowers } from '@/hooks/use-get-followers'
+import { useGetFollowing } from '@/hooks/use-get-following'
 
 export default function UserProfilePage() {
   const params = useParams();
   const username = params.username as string;
   const { user: currentUser } = useAuthStore();
+  const queryClient = useQueryClient();
   
-  const [profile, setProfile] = useState<IUserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: profile, isLoading: loading } = useGetUserProfile(username);
+  const { data: posts, isLoading: postsLoading } = useGetPostsByUsername(username);
+  const { data: followersData, isLoading: followersLoading } = useGetFollowers(profile?._id || '', 1, 50);
+  const { data: followingData, isLoading: followingLoading } = useGetFollowing(profile?._id || '', 1, 50);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const data = await UserActions.GetUserProfileAction(username);
-      setProfile(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (username) {
-      fetchProfile();
-    }
-  }, [username]);
+  const [showFollowersDialog, setShowFollowersDialog] = useState(false);
+  const [showFollowingDialog, setShowFollowingDialog] = useState(false);
 
   const handleFollow = async () => {
     if (!profile) return;
@@ -50,16 +43,24 @@ export default function UserProfilePage() {
     try {
       if (profile.isFollowing) {
         await UserActions.UnfollowUserAction(profile._id);
-        setProfile(prev => prev ? ({ ...prev, isFollowing: false, followersCount: (prev.followersCount || 0) - 1 }) : null);
+        // Update cache optimistically
+        queryClient.setQueryData(['userProfile', username], (old: IUserProfile | undefined) => 
+          old ? { ...old, isFollowing: false, followersCount: (old.followersCount || 0) - 1 } : old
+        );
         toast.success(`Unfollowed ${profile.username}`);
       } else {
         await UserActions.FollowUserAction(profile._id);
-        setProfile(prev => prev ? ({ ...prev, isFollowing: true, followersCount: (prev.followersCount || 0) + 1 }) : null);
+        // Update cache optimistically
+        queryClient.setQueryData(['userProfile', username], (old: IUserProfile | undefined) => 
+          old ? { ...old, isFollowing: true, followersCount: (old.followersCount || 0) + 1 } : old
+        );
         toast.success(`Followed ${profile.username}`);
       }
     } catch (error) {
       console.error(error);
       toast.error("Action failed");
+      // Refetch to revert optimistic update
+      queryClient.invalidateQueries({ queryKey: ['userProfile', username] });
     } finally {
       setFollowLoading(false);
     }
@@ -113,7 +114,10 @@ export default function UserProfilePage() {
               <h1 className="text-2xl font-light tracking-tight">{profile.username}</h1>
               <div className="flex items-center gap-3">
                 {isOwner ? (
-                  <EditProfileDialog user={profile} onUpdate={fetchProfile} />
+                  <EditProfileDialog 
+                    user={profile} 
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ['userProfile', username] })} 
+                  />
                 ) : (
                   <Button 
                     onClick={handleFollow} 
@@ -139,11 +143,17 @@ export default function UserProfilePage() {
                 <span className="font-semibold">{profile.postsCount || 0}</span>
                 <span className="text-muted-foreground">posts</span>
               </div>
-              <button className="flex gap-1 hover:text-foreground transition-colors">
+              <button 
+                className="flex gap-1 hover:text-foreground transition-colors"
+                onClick={() => setShowFollowersDialog(true)}
+              >
                 <span className="font-semibold">{profile.followersCount || 0}</span>
                 <span className="text-muted-foreground">followers</span>
               </button>
-              <button className="flex gap-1 hover:text-foreground transition-colors">
+              <button 
+                className="flex gap-1 hover:text-foreground transition-colors"
+                onClick={() => setShowFollowingDialog(true)}
+              >
                 <span className="font-semibold">{profile.followingCount || 0}</span>
                 <span className="text-muted-foreground">following</span>
               </button>
@@ -193,14 +203,27 @@ export default function UserProfilePage() {
         <div className="mt-1">
           {activeTab === "posts" && (
             <div className="grid grid-cols-3 gap-1">
-              {profile.postsCount && profile.postsCount > 0 ? (
-                // Placeholder posts - replace with actual posts when available
-                Array.from({ length: Math.min(profile.postsCount, 9) }).map((_, index) => (
+              {postsLoading ? (
+                <div className="col-span-3 flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : posts && posts.length > 0 ? (
+                posts.map((post) => (
                   <div
-                    key={index}
+                    key={post._id}
                     className="aspect-square bg-muted relative group cursor-pointer overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-600/10" />
+                    {post.images && post.images.length > 0 ? (
+                      <img
+                        src={post.images[0]}
+                        alt={post.caption || 'Post'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-600/10 flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">No image</span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                   </div>
                 ))
@@ -220,6 +243,24 @@ export default function UserProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Followers Dialog */}
+      <FollowersDialog
+        open={showFollowersDialog}
+        onOpenChange={setShowFollowersDialog}
+        userId={profile._id}
+        followers={followersData?.data || []}
+        isLoading={followersLoading}
+      />
+
+      {/* Following Dialog */}
+      <FollowingDialog
+        open={showFollowingDialog}
+        onOpenChange={setShowFollowingDialog}
+        userId={profile._id}
+        following={followingData?.data || []}
+        isLoading={followingLoading}
+      />
     </div>
   )
 }
