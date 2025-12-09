@@ -211,4 +211,41 @@ export const PostRepository = {
       user_id: new Types.ObjectId(userId) as any,
     });
   },
+
+  // Batch query methods for user interactions
+  findUserLikesForPosts: async (postIds: string[], userId: string) => {
+    const likes = await PostLike.find({
+      post_id: { $in: postIds.map((id) => new Types.ObjectId(id)) },
+      user_id: new Types.ObjectId(userId) as any,
+    }).lean();
+    return likes.map((like: any) => String(like.post_id));
+  },
+
+  findUserBookmarksForPosts: async (postIds: string[], userId: string) => {
+    const bookmarks = await PostBookmark.find({
+      post_id: { $in: postIds.map((id) => new Types.ObjectId(id)) },
+      user_id: new Types.ObjectId(userId) as any,
+    }).lean();
+    return bookmarks.map((bookmark: any) => String(bookmark.post_id));
+  },
+
+  findUserCommentsForPosts: async (postIds: string[], userId: string) => {
+    const comments = await PostComment.find({
+      post_id: { $in: postIds.map((id) => new Types.ObjectId(id)) },
+      user_id: new Types.ObjectId(userId) as any,
+    })
+      .sort({ createdAt: -1 })
+      .populate("user_id", "name username profile_picture")
+      .lean();
+
+    // Create a map of post_id to the user's most recent comment
+    const commentMap: Record<string, any> = {};
+    for (const comment of comments) {
+      const postId = String((comment as any).post_id);
+      if (!commentMap[postId]) {
+        commentMap[postId] = comment;
+      }
+    }
+    return commentMap;
+  },
 };

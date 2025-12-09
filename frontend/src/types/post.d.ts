@@ -9,6 +9,10 @@ interface IPost {
     likes?: string[]; // Assuming populated or added
     bookmarks?: string[];
     comments?: string[];
+    // New fields from backend for authenticated users
+    isLiked?: boolean;
+    isBookmarked?: boolean;
+    userComment?: IComment | null;
 }
 
 interface IComment {

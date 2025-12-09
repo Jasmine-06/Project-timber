@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -17,6 +17,7 @@ interface PostCardProps {
   commentsCount: number
   isLiked?: boolean
   isBookmarked?: boolean
+  userComment?: IComment | null
   onLike?: () => void
   onComment?: () => void
   onBookmark?: () => void
@@ -33,6 +34,7 @@ export function PostCard({
   commentsCount,
   isLiked = false,
   isBookmarked = false,
+  userComment,
   onLike,
   onComment,
   onBookmark,
@@ -40,6 +42,19 @@ export function PostCard({
   const [liked, setLiked] = useState(isLiked)
   const [bookmarked, setBookmarked] = useState(isBookmarked)
   const [likes, setLikes] = useState(likesCount)
+
+  // Sync local state with props when they change (e.g., from cache updates)
+  useEffect(() => {
+    setLiked(isLiked)
+  }, [isLiked])
+
+  useEffect(() => {
+    setBookmarked(isBookmarked)
+  }, [isBookmarked])
+
+  useEffect(() => {
+    setLikes(likesCount)
+  }, [likesCount])
 
   // TanStack Query mutations
   const toggleLikeMutation = useToggleLike()
@@ -169,6 +184,14 @@ export function PostCard({
           <div className="text-sm mb-1">
             <span className="font-semibold mr-1.5">{username}</span>
             <span className="whitespace-pre-wrap">{caption}</span>
+          </div>
+        )}
+
+        {/* User's Comment */}
+        {userComment && (
+          <div className="text-sm mb-1.5 bg-muted/30 rounded-md px-2 py-1.5">
+            <span className="font-semibold mr-1.5 text-primary">You</span>
+            <span className="whitespace-pre-wrap">{userComment.content}</span>
           </div>
         )}
 

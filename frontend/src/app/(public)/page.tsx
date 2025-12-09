@@ -49,10 +49,6 @@ export default function Page() {
               // user_id can be a string or populated IUser object
               const author = typeof post.user_id === 'string' ? null : post.user_id
               
-              // Check if current user has liked or bookmarked this post
-              const isLiked = user ? post.likes?.includes(user._id) || false : false
-              const isBookmarked = user ? post.bookmarks?.includes(user._id) || false : false
-              
               return (
                 <PostCard
                   key={post._id}
@@ -64,8 +60,9 @@ export default function Page() {
                   images={post.images || []}
                   likesCount={post.likes?.length || 0}
                   commentsCount={post.comments?.length || 0}
-                  isLiked={isLiked}
-                  isBookmarked={isBookmarked}
+                  isLiked={post.isLiked || false}
+                  isBookmarked={post.isBookmarked || false}
+                  userComment={post.userComment}
                 />
               )
             })}
