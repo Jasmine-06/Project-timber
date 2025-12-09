@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { CloudinaryUploader } from "../utils/cloudinary.config";
 import logger from "../utils/logger";
+import { ApiResponse } from "../advices/ApiResponse";
 
 export const uploadMedia = async (
   req: Request,
@@ -37,14 +38,15 @@ export const uploadMedia = async (
           )
         : [];
 
-    res.status(200).json({
-      success: true,
-      message: "Files uploaded successfully",
-      data: {
-        images: imageUploads,
-        videos: videoUploads,
-      },
-    });
+    res.status(200).json(
+      new ApiResponse({
+        data: {
+          images: imageUploads,
+          videos: videoUploads,
+        },
+        message: "Files uploaded successfully",
+      })
+    );
     logger.info(
       { imageCount: imageUploads.length, videoCount: videoUploads.length },
       "Files uploaded successfully"

@@ -48,6 +48,18 @@ const ResetPasswordSchema = z.object({
     verificationCode: z.string().min(6, "Verification code is atleast 6 digits").max(6, "Verification code must be exactly 6 digits"),
     newPassword: z.string().min(6, "New password must be atleast 6 characters long")
 });
+const GetUserQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  search: z.string().optional(),
+});
+
+const GetAdminUserQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  search: z.string().optional(),
+  account_status: z.string().optional(),
+});
 
 type IRegistrationSchema = zodInfer<typeof RegistrationSchema>;
 type ILoginSchema = zodInfer<typeof LoginSchema>;
@@ -57,6 +69,9 @@ type ICheckVerificationSchema = zodInfer<typeof CheckVerificationSchema>;
 type IForgotPasswordSchema = zodInfer<typeof ForgotPasswordSchema>;
 type IResendVerificationCodeSchema = zodInfer<typeof ResendVerificationCodeSchema>;
 type IResetPasswordSchema = zodInfer<typeof ResetPasswordSchema>;
+type IGetUserQuerySchema = zodInfer<typeof GetUserQuerySchema>;
+type IGetAdminUserQuerySchema = zodInfer<typeof GetAdminUserQuerySchema>;
+
 
 
 export {
@@ -68,6 +83,9 @@ export {
     ForgotPasswordSchema,
     ResendVerificationCodeSchema,
     ResetPasswordSchema,
+    GetUserQuerySchema,
+    GetAdminUserQuerySchema,
+
 };
 
 export type { 
@@ -79,4 +97,6 @@ export type {
     IForgotPasswordSchema,
     IResendVerificationCodeSchema,
     IResetPasswordSchema,
+    IGetUserQuerySchema,
+    IGetAdminUserQuerySchema
 };
