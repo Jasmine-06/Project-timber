@@ -248,4 +248,84 @@ export const PostRepository = {
     }
     return commentMap;
   },
+
+  findBookmarkedPostsByUserId: async (
+    userId: string,
+    skip: number,
+    limit: number
+  ) => {
+    const bookmarks = await PostBookmark.find({
+      user_id: new Types.ObjectId(userId) as any,
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const postIds = bookmarks.map((bookmark: any) =>
+      new Types.ObjectId(bookmark.post_id)
+    );
+
+    if (postIds.length === 0) {
+      return [];
+    }
+
+    // Fetch the posts with user details
+    return await Post.find({ _id: { $in: postIds } })
+      .populate("user_id", "name username profile_picture")
+      .lean();
+  },
+
+  countBookmarkedPostsByUserId: async (userId: string) => {
+    return await PostBookmark.countDocuments({
+      user_id: new Types.ObjectId(userId) as any,
+    });
+  },
+
+  // Batch count methods for likes and comments
+  countLikesForPosts: async (postIds: string[]) => {
+    const counts = await PostLike.aggregate([
+      {
+        $match: {
+          post_id: { $in: postIds.map((id) => new Types.ObjectId(id)) },
+        },
+      },
+      {
+        $group: {
+          _id: "$post_id",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Convert to a map for easy lookup
+    const countMap: Record<string, number> = {};
+    for (const item of counts) {
+      countMap[String(item._id)] = item.count;
+    }
+    return countMap;
+  },
+
+  countCommentsForPosts: async (postIds: string[]) => {
+    const counts = await PostComment.aggregate([
+      {
+        $match: {
+          post_id: { $in: postIds.map((id) => new Types.ObjectId(id)) },
+        },
+      },
+      {
+        $group: {
+          _id: "$post_id",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Convert to a map for easy lookup
+    const countMap: Record<string, number> = {};
+    for (const item of counts) {
+      countMap[String(item._id)] = item.count;
+    }
+    return countMap;
+  },
 };
