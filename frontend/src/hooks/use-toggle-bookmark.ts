@@ -17,6 +17,9 @@ export const useToggleBookmark = () => {
       // Invalidate posts query to refresh the feed
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       
+      // Force refetch bookmarked posts query to immediately update the saved posts list
+      queryClient.refetchQueries({ queryKey: ['bookmarkedPosts'] });
+      
       // Optional: Show success message
       // toast.success(data.message || 'Bookmark updated');
     },

@@ -28,19 +28,13 @@ export const useToggleLike = () => {
         
         return old.map((post) => {
           if (post._id === variables.post_id) {
-            // Get current user ID from Zustand store
-            const userId = user?._id;
-            
-            if (!userId) return post;
-
-            const likes = post.likes || [];
-            const isLiked = likes.includes(userId);
+            const currentIsLiked = post.isLiked || false;
+            const currentLikes = typeof post.likes === 'number' ? post.likes : 0;
 
             return {
               ...post,
-              likes: isLiked
-                ? likes.filter((id) => id !== userId) // Unlike
-                : [...likes, userId], // Like
+              likes: currentIsLiked ? currentLikes - 1 : currentLikes + 1,
+              isLiked: !currentIsLiked,
             };
           }
           return post;
@@ -65,10 +59,9 @@ export const useToggleLike = () => {
 
       console.error('Toggle like error:', error);
     },
-    onSettled: () => {
-      // Optionally refetch to ensure cache is in sync with server
-      // Remove this if you want to avoid any refetching
-      // queryClient.invalidateQueries({ queryKey: ['posts'] });
+    onSuccess: () => {
+      // Don't refetch - rely on optimistic updates for performance
+      // The backend should return correct isLiked on initial page load
     },
   });
 };
