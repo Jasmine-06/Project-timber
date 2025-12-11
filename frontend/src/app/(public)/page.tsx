@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { PostCard } from './_components/PostCard'
 import { RightSidebar } from './_components/RightSidebar'
+import InstagramPostDialog from './_components/PostDetailDialogue'
 import { useGetPosts } from '@/hooks/use-get-posts'
 import { useAuthStore } from '@/store/auth-store'
 import { Loader2 } from 'lucide-react'
@@ -10,6 +11,35 @@ import { Loader2 } from 'lucide-react'
 export default function Page() {
   const { data: posts, isLoading, isError, error } = useGetPosts()
   const { user } = useAuthStore()
+  const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const handleCommentClick = (post: any) => {
+    // Transform post data to match dialog interface
+    const postData = {
+      id: post._id,
+      author: {
+        username: typeof post.user_id === 'string' ? 'Unknown' : post.user_id?.username || 'Unknown',
+        avatar: typeof post.user_id === 'string' ? undefined : post.user_id?.profile_picture,
+      },
+      content: post.caption || '',
+      imageUrl: post.images?.[0],
+      likes: post.likes?.length || 0,
+      comments: (post.comments || []).map((comment: any) => ({
+        id: comment._id,
+        username: typeof comment.user_id === 'string' ? 'Unknown' : comment.user_id?.username || 'Unknown',
+        avatar: typeof comment.user_id === 'string' ? undefined : comment.user_id?.profile_picture,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        likes: comment.likes?.length || 0,
+      })),
+      createdAt: post.createdAt,
+      isLiked: post.isLiked || false,
+      isSaved: post.isBookmarked || false,
+    }
+    setSelectedPost(postData)
+    setIsDialogOpen(true)
+  }
 
   return (
     <div className="flex gap-8 justify-center">
@@ -48,7 +78,7 @@ export default function Page() {
             {posts.map((post) => {
               // user_id can be a string or populated IUser object
               const author = typeof post.user_id === 'string' ? null : post.user_id
-              
+
               return (
                 <PostCard
                   key={post._id}
@@ -63,6 +93,7 @@ export default function Page() {
                   isLiked={post.isLiked || false}
                   isBookmarked={post.isBookmarked || false}
                   userComment={post.userComment}
+                  onComment={() => handleCommentClick(post)}
                 />
               )
             })}
@@ -72,6 +103,15 @@ export default function Page() {
 
       {/* Right Sidebar */}
       <RightSidebar />
+
+      {/* Post Detail Dialog */}
+      {selectedPost && (
+        <InstagramPostDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          post={selectedPost}
+        />
+      )}
     </div>
   )
 }

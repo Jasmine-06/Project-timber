@@ -127,8 +127,8 @@ export function PostCard({
       {/* Image */}
       {images.length > 0 && (
         <div className="w-full bg-muted/20 max-h-[600px] overflow-hidden flex items-center justify-center">
-          <img 
-            src={images[0]} 
+          <img
+            src={images[0]}
             alt={`Post by ${username}`}
             className="w-[90%] h-full max-h-[600px] object-cover"
           />
@@ -139,37 +139,35 @@ export function PostCard({
       <div className="px-3 py-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-12 w-12 hover:bg-transparent p-0"
               onClick={handleLike}
             >
-              <Heart 
-                className={`h-[28px] w-[28px] transition-colors ${
-                  liked ? 'fill-red-500 text-red-500' : 'text-foreground'
-                }`}
+              <Heart
+                className={`h-[28px] w-[28px] transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-foreground'
+                  }`}
               />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-12 w-12 hover:bg-transparent p-0"
               onClick={onComment}
             >
               <MessageCircle className="h-[28px] w-[28px]" />
             </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-12 w-12 hover:bg-transparent p-0"
             onClick={handleBookmark}
           >
-            <Bookmark 
-              className={`h-[28px] w-[28px] transition-colors ${
-                bookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
-              }`}
+            <Bookmark
+              className={`h-[28px] w-[28px] transition-colors ${bookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
+                }`}
             />
           </Button>
         </div>
@@ -197,7 +195,7 @@ export function PostCard({
 
         {/* Comments Count */}
         {commentsCount > 0 && (
-          <button 
+          <button
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             onClick={onComment}
           >
