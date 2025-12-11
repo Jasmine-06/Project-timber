@@ -165,19 +165,19 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 pointer-events-none" />
 
             {imageUrl || videoUrl ? (
-              <div className="w-full h-full relative flex items-center justify-center p-4">
+              <div className="w-full h-full relative flex items-center justify-center">
                 {imageUrl && (
                   <img
                     src={imageUrl}
                     alt="Post content"
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    className="w-full h-full object-cover"
                   />
                 )}
                 {videoUrl && (
                   <video
                     src={videoUrl}
                     controls
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    className="w-full h-full object-cover"
                   />
                 )}
               </div>
@@ -337,63 +337,66 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
               )}
             </div>
 
-            {/* Actions */}
-            <div className="border-t border-border/50 px-5 py-4 space-y-3 bg-gradient-to-t from-background/50 to-transparent">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-5">
+            {/* Footer Actions & Input */}
+            <div className="border-t border-border/50 bg-background/95 backdrop-blur-sm mt-auto">
+              {/* Actions */}
+              <div className="px-4 py-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setLiked(!liked)}
+                      className="hover:scale-110 transition-transform duration-200"
+                    >
+                      <Heart
+                        className={`w-5 h-5 transition-all ${liked ? 'fill-[hsl(var(--instagram-red))] text-[hsl(var(--instagram-red))] scale-110' : 'text-foreground'}`}
+                      />
+                    </button>
+                    <button className="hover:scale-110 transition-transform duration-200">
+                      <MessageCircle className="w-5 h-5 text-foreground" />
+                    </button>
+                  </div>
                   <button
-                    onClick={() => setLiked(!liked)}
+                    onClick={() => setSaved(!saved)}
                     className="hover:scale-110 transition-transform duration-200"
                   >
-                    <Heart
-                      className={`w-7 h-7 transition-all ${liked ? 'fill-[hsl(var(--instagram-red))] text-[hsl(var(--instagram-red))] scale-110' : 'text-foreground'}`}
+                    <Bookmark
+                      className={`w-5 h-5 transition-all ${saved ? 'fill-foreground scale-110' : ''} text-foreground`}
                     />
                   </button>
-                  <button className="hover:scale-110 transition-transform duration-200">
-                    <MessageCircle className="w-7 h-7 text-foreground" />
-                  </button>
                 </div>
-                <button
-                  onClick={() => setSaved(!saved)}
-                  className="hover:scale-110 transition-transform duration-200"
-                >
-                  <Bookmark
-                    className={`w-7 h-7 transition-all ${saved ? 'fill-foreground scale-110' : ''} text-foreground`}
-                  />
-                </button>
+
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-foreground">{(post.likes || 0).toLocaleString()} likes</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{formatTime(post.createdAt)}</p>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <p className="text-sm font-bold text-foreground">{(post.likes || 0).toLocaleString()} likes</p>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{formatTime(post.createdAt)}</p>
-              </div>
-            </div>
-
-            {/* Comment Input */}
-            <div className="border-t border-border/50 px-5 py-4 flex items-center gap-3 bg-background/80">
-              <Input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (comment.trim()) {
-                      handlePostComment();
+              {/* Comment Input */}
+              <div className="border-t border-border/50 px-4 py-3 flex items-center gap-3">
+                <Input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (comment.trim()) {
+                        handlePostComment();
+                      }
                     }
-                  }
-                }}
-                className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground/70 text-foreground px-0 font-medium"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!comment.trim() || isCreatingComment}
-                onClick={handlePostComment}
-                className="text-[hsl(var(--instagram-blue))] font-bold hover:text-[hsl(var(--instagram-blue))]/80 hover:bg-transparent disabled:opacity-50 transition-all px-3 py-2"
-              >
-                {isCreatingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
-              </Button>
+                  }}
+                  className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground/70 text-foreground px-0 font-medium h-auto py-0"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!comment.trim() || isCreatingComment}
+                  onClick={handlePostComment}
+                  className="text-[hsl(var(--instagram-blue))] font-bold hover:text-[hsl(var(--instagram-blue))]/80 hover:bg-transparent disabled:opacity-50 transition-all px-3 py-0 h-auto"
+                >
+                  {isCreatingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
