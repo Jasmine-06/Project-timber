@@ -22,15 +22,26 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { useSearchUsers } from '@/hooks/use-search-users'
 import { AvatarImage } from "@/components/ui/avatar"
 import { CreatePostDialog } from './CreatePostDialog'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
+  const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
 
   const debouncedSearch = useDebounce(searchQuery, 500)
   const { users: searchResults, isLoading: isSearching } = useSearchUsers(debouncedSearch)
+
+  const handleLogout = () => {
+    // Invalidate queries to clear personalized data before logging out
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+    queryClient.invalidateQueries({ queryKey: ['bookmarkedPosts'] });
+    
+    // Clear auth state
+    setLogout();
+  }
 
   return (
     <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -147,7 +158,7 @@ export function SiteHeader() {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLogout()}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

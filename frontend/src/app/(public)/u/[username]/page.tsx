@@ -27,11 +27,16 @@ export default function UserProfilePage() {
   
   const { data: profile, isLoading: loading } = useGetUserProfile(username);
   const { data: posts, isLoading: postsLoading } = useGetPostsByUsername(username);
-  const { data: bookmarkedPosts, isLoading: bookmarkedPostsLoading } = useGetBookmarkedPosts();
   const { data: followersData, isLoading: followersLoading } = useGetFollowers(profile?._id || '', 1, 50);
   const { data: followingData, isLoading: followingLoading } = useGetFollowing(profile?._id || '', 1, 50);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "saved">("posts");
+  
+  // Only fetch bookmarked posts when viewing the saved tab and user is the owner
+  const isOwner = currentUser?.username === profile?.username;
+  const { data: bookmarkedPosts, isLoading: bookmarkedPostsLoading } = useGetBookmarkedPosts(
+    isOwner && activeTab === "saved"
+  );
   const [showFollowersDialog, setShowFollowersDialog] = useState(false);
   const [showFollowingDialog, setShowFollowingDialog] = useState(false);
 
@@ -88,8 +93,6 @@ export default function UserProfilePage() {
   if (!profile) {
     return <div className="text-center py-10">User not found</div>;
   }
-
-  const isOwner = currentUser?.username === profile.username;
 
   return (
     <div className="flex-1 bg-background min-h-screen">
