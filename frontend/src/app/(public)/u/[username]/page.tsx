@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useGetPostsByUsername } from '@/hooks/use-get-posts-by-username'
 import { useGetFollowers } from '@/hooks/use-get-followers'
 import { useGetFollowing } from '@/hooks/use-get-following'
+import { useGetBookmarkedPosts } from '@/hooks/use-get-bookmarked-posts'
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -26,6 +27,7 @@ export default function UserProfilePage() {
   
   const { data: profile, isLoading: loading } = useGetUserProfile(username);
   const { data: posts, isLoading: postsLoading } = useGetPostsByUsername(username);
+  const { data: bookmarkedPosts, isLoading: bookmarkedPostsLoading } = useGetBookmarkedPosts();
   const { data: followersData, isLoading: followersLoading } = useGetFollowers(profile?._id || '', 1, 50);
   const { data: followingData, isLoading: followingLoading } = useGetFollowing(profile?._id || '', 1, 50);
   const [followLoading, setFollowLoading] = useState(false);
@@ -236,9 +238,35 @@ export default function UserProfilePage() {
           )}
           {activeTab === "saved" && isOwner && (
             <div className="grid grid-cols-3 gap-1">
-              <div className="col-span-3 text-center py-20 text-muted-foreground">
-                No saved posts yet
-              </div>
+              {bookmarkedPostsLoading ? (
+                <div className="col-span-3 flex justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : bookmarkedPosts && bookmarkedPosts.length > 0 ? (
+                bookmarkedPosts.map((post) => (
+                  <div
+                    key={post._id}
+                    className="aspect-square bg-muted relative group cursor-pointer overflow-hidden"
+                  >
+                    {post.images && post.images.length > 0 ? (
+                      <img
+                        src={post.images[0]}
+                        alt={post.caption || 'Post'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-600/10 flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">No image</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-20 text-muted-foreground">
+                  No saved posts yet
+                </div>
+              )}
             </div>
           )}
         </div>

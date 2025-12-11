@@ -326,3 +326,26 @@ export const ToggleBookmarkController = asyncHandler(
     res.status(200).json(new ApiResponse(response));
   }
 );
+
+export const GetBookmarkedPostsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.debug({ query: req.query }, "GetBookmarkedPostsController request");
+
+    if (!req.user?._id) {
+      throw new ApiError(401, "Authentication failed");
+    }
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const userId = String(req.user._id);
+
+    const data = await PostService.getBookmarkedPosts(page, limit, userId);
+
+    res.status(200).json(
+      new ApiResponse({
+        ...data,
+        message: "Bookmarked posts retrieved successfully",
+      })
+    );
+  }
+);

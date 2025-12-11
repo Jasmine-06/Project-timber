@@ -57,12 +57,14 @@ export const PostService = {
     if (userId && posts.length > 0) {
       const postIds = posts.map((post: any) => String(post._id));
 
-      // Batch fetch user interactions
-      const [likedPostIds, bookmarkedPostIds, userCommentsMap] =
+      // Batch fetch user interactions and counts
+      const [likedPostIds, bookmarkedPostIds, userCommentsMap, likesCountMap, commentsCountMap] =
         await Promise.all([
           PostRepository.findUserLikesForPosts(postIds, userId),
           PostRepository.findUserBookmarksForPosts(postIds, userId),
           PostRepository.findUserCommentsForPosts(postIds, userId),
+          PostRepository.countLikesForPosts(postIds),
+          PostRepository.countCommentsForPosts(postIds),
         ]);
 
       // Create sets for O(1) lookup
@@ -77,6 +79,28 @@ export const PostService = {
           isLiked: likedSet.has(postId),
           isBookmarked: bookmarkedSet.has(postId),
           userComment: userCommentsMap[postId] || null,
+          likes: likesCountMap[postId] || 0,
+          comments: commentsCountMap[postId] || 0,
+        };
+      });
+    } else if (posts.length > 0) {
+      // For unauthenticated users, still include counts and set interaction flags to false
+      const postIds = posts.map((post: any) => String(post._id));
+
+      const [likesCountMap, commentsCountMap] = await Promise.all([
+        PostRepository.countLikesForPosts(postIds),
+        PostRepository.countCommentsForPosts(postIds),
+      ]);
+
+      posts = posts.map((post: any) => {
+        const postId = String(post._id);
+        return {
+          ...post,
+          likes: likesCountMap[postId] || 0,
+          comments: commentsCountMap[postId] || 0,
+          isLiked: false,
+          isBookmarked: false,
+          userComment: null,
         };
       });
     }
@@ -248,18 +272,67 @@ export const PostService = {
   // Bookmarks
   toggleBookmark: async (postId: string, userId: string) => {
     logger.debug({ postId, userId }, "toggleBookmark service called");
-    const post = await PostRepository.findPostById(postId);
-    if (!post) {
-      throw new ApiError(404, "Post not found");
-    }
-
     const existingBookmark = await PostRepository.findBookmark(postId, userId);
+
     if (existingBookmark) {
       await PostRepository.deleteBookmark(postId, userId);
-      return { message: "Post removed from bookmarks", isBookmarked: false };
+      return { message: "Bookmark removed successfully" };
     } else {
       await PostRepository.createBookmark(postId, userId);
-      return { message: "Post bookmarked", isBookmarked: true };
+      return { message: "Post bookmarked successfully" };
     }
+  },
+
+  getBookmarkedPosts: async (page: number, limit: number, userId: string) => {
+    logger.debug({ page, limit, userId }, "getBookmarkedPosts service called");
+    const skip = (page - 1) * limit;
+
+    let posts = await PostRepository.findBookmarkedPostsByUserId(
+      userId,
+      skip,
+      limit
+    );
+    const totalPosts = await PostRepository.countBookmarkedPostsByUserId(userId);
+
+    // Append interaction data to each post
+    if (posts.length > 0) {
+      const postIds = posts.map((post: any) => String(post._id));
+
+      // Batch fetch user interactions and counts
+      const [likedPostIds, bookmarkedPostIds, userCommentsMap, likesCountMap, commentsCountMap] =
+        await Promise.all([
+          PostRepository.findUserLikesForPosts(postIds, userId),
+          PostRepository.findUserBookmarksForPosts(postIds, userId),
+          PostRepository.findUserCommentsForPosts(postIds, userId),
+          PostRepository.countLikesForPosts(postIds),
+          PostRepository.countCommentsForPosts(postIds),
+        ]);
+
+      // Create sets for O(1) lookup
+      const likedSet = new Set(likedPostIds);
+      const bookmarkedSet = new Set(bookmarkedPostIds);
+
+      // Append interaction data to each post
+      posts = posts.map((post: any) => {
+        const postId = String(post._id);
+        return {
+          ...post,
+          isLiked: likedSet.has(postId),
+          isBookmarked: bookmarkedSet.has(postId),
+          userComment: userCommentsMap[postId] || null,
+          likes: likesCountMap[postId] || 0,
+          comments: commentsCountMap[postId] || 0,
+        };
+      });
+    }
+
+    const totalPage = Math.ceil(totalPosts / limit);
+
+    return {
+      posts,
+      totalPosts,
+      totalPage,
+      currentPage: page,
+    };
   },
 };

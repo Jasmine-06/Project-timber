@@ -15,6 +15,12 @@ export const PostActions = {
     return response.data.data!.posts;
   },
 
+  // Get bookmarked posts (protected)
+  GetBookmarkedPostsAction: async (): Promise<IPost[]> => {
+    const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], total: number, page: number, limit: number }>>("/post/bookmarks");
+    return response.data.data!.posts;
+  },
+
   // Get posts by username (public)
   GetPostsByUsernameAction: async (username: string): Promise<IPost[]> => {
     const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], total: number, page: number, limit: number }>>(

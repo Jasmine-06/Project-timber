@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -39,65 +39,20 @@ export function PostCard({
   onComment,
   onBookmark,
 }: PostCardProps) {
-  const [liked, setLiked] = useState(isLiked)
-  const [bookmarked, setBookmarked] = useState(isBookmarked)
-  const [likes, setLikes] = useState(likesCount)
-
-  // Sync local state with props when they change (e.g., from cache updates)
-  useEffect(() => {
-    setLiked(isLiked)
-  }, [isLiked])
-
-  useEffect(() => {
-    setBookmarked(isBookmarked)
-  }, [isBookmarked])
-
-  useEffect(() => {
-    setLikes(likesCount)
-  }, [likesCount])
-
   // TanStack Query mutations
   const toggleLikeMutation = useToggleLike()
   const toggleBookmarkMutation = useToggleBookmark()
 
   const handleLike = () => {
-    // Optimistic update
-    const newLikedState = !liked
-    setLiked(newLikedState)
-    setLikes(newLikedState ? likes + 1 : likes - 1)
-
-    // Call API
-    toggleLikeMutation.mutate(
-      { post_id: postId },
-      {
-        onError: () => {
-          // Revert on error
-          setLiked(!newLikedState)
-          setLikes(newLikedState ? likes - 1 : likes + 1)
-        }
-      }
-    )
-
-    onLike?.()
+    // Call API - optimistic update is handled by the mutation hook
+    toggleLikeMutation.mutate({ post_id: postId });
+    onLike?.();
   }
 
   const handleBookmark = () => {
-    // Optimistic update
-    const newBookmarkedState = !bookmarked
-    setBookmarked(newBookmarkedState)
-
-    // Call API
-    toggleBookmarkMutation.mutate(
-      { post_id: postId },
-      {
-        onError: () => {
-          // Revert on error
-          setBookmarked(!newBookmarkedState)
-        }
-      }
-    )
-
-    onBookmark?.()
+    // Call API - optimistic update is handled by the mutation hook
+    toggleBookmarkMutation.mutate({ post_id: postId });
+    onBookmark?.();
   }
 
   return (
@@ -146,7 +101,7 @@ export function PostCard({
               onClick={handleLike}
             >
               <Heart
-                className={`h-[28px] w-[28px] transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-foreground'
+                className={`h-[28px] w-[28px] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
                   }`}
               />
             </Button>
@@ -166,7 +121,7 @@ export function PostCard({
             onClick={handleBookmark}
           >
             <Bookmark
-              className={`h-[28px] w-[28px] transition-colors ${bookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
+              className={`h-[28px] w-[28px] transition-colors ${isBookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
                 }`}
             />
           </Button>
@@ -174,7 +129,7 @@ export function PostCard({
 
         {/* Likes Count */}
         <div className="mb-1.5">
-          <span className="text-sm font-semibold">{likes.toLocaleString()} likes</span>
+          <span className="text-sm font-semibold">{likesCount.toLocaleString()} likes</span>
         </div>
 
         {/* Caption */}

@@ -88,8 +88,8 @@ export default function Page() {
                   timeAgo={formatTimeAgo(post.createdAt)}
                   caption={post.caption}
                   images={post.images || []}
-                  likesCount={post.likes?.length || 0}
-                  commentsCount={post.comments?.length || 0}
+                  likesCount={post.likes ?? 0}
+                  commentsCount={post.comments ?? 0}
                   isLiked={post.isLiked || false}
                   isBookmarked={post.isBookmarked || false}
                   userComment={post.userComment}

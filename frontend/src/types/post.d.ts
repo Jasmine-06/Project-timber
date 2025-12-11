@@ -6,9 +6,9 @@ interface IPost {
     caption: string;
     createdAt: string;
     updatedAt: string;
-    likes?: string[]; // Assuming populated or added
+    likes?: number; // Like count from backend
     bookmarks?: string[];
-    comments?: string[];
+    comments?: number; // Comment count from backend
     // New fields from backend for authenticated users
     isLiked?: boolean;
     isBookmarked?: boolean;

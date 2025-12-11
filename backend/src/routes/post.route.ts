@@ -16,6 +16,7 @@ import {
   DeleteCommentController,
   ToggleLikeController,
   ToggleBookmarkController,
+  GetBookmarkedPostsController,
 } from "../controllers/post.controller";
 
 const postRouter = Router();
@@ -23,11 +24,19 @@ const postRouter = Router();
 // Public routes
 postRouter.get("/", OptionalAuthMiddleware, GetAllPostsController);
 postRouter.get("/user/:username", GetPostsByUsernameController);
-postRouter.get("/:postId", GetPostByIdController);
+
+// Bookmarks route - must be before /:postId to avoid route conflict
+postRouter.get("/bookmarks", AuthMiddleware, GetBookmarkedPostsController);
+
 postRouter.get("/:postId/comments", GetCommentsController);
+postRouter.get("/:postId", GetPostByIdController);
 
 // Protected routes
 postRouter.use(AuthMiddleware);
+
+// Interaction Routes (Like/Bookmark)
+postRouter.post("/like", ToggleLikeController);
+postRouter.post("/bookmark", ToggleBookmarkController);
 
 // Post Routes
 postRouter.post("/", CreatePostController);
@@ -39,9 +48,5 @@ postRouter.delete("/:postId", DeletePostController);
 postRouter.post("/comments", CreateCommentController);
 postRouter.patch("/comments/:commentId", UpdateCommentController);
 postRouter.delete("/comments/:commentId", DeleteCommentController);
-
-// Interaction Routes (Like/Bookmark)
-postRouter.post("/like", ToggleLikeController);
-postRouter.post("/bookmark", ToggleBookmarkController);
 
 export default postRouter;
