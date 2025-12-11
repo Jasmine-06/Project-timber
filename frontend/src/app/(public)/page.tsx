@@ -11,33 +11,11 @@ import { Loader2 } from 'lucide-react'
 export default function Page() {
   const { data: posts, isLoading, isError, error } = useGetPosts()
   const { user } = useAuthStore()
-  const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleCommentClick = (post: any) => {
-    // Transform post data to match dialog interface
-    const postData = {
-      id: post._id,
-      author: {
-        username: typeof post.user_id === 'string' ? 'Unknown' : post.user_id?.username || 'Unknown',
-        avatar: typeof post.user_id === 'string' ? undefined : post.user_id?.profile_picture,
-      },
-      content: post.caption || '',
-      imageUrl: post.images?.[0],
-      likes: post.likes?.length || 0,
-      comments: (post.comments || []).map((comment: any) => ({
-        id: comment._id,
-        username: typeof comment.user_id === 'string' ? 'Unknown' : comment.user_id?.username || 'Unknown',
-        avatar: typeof comment.user_id === 'string' ? undefined : comment.user_id?.profile_picture,
-        content: comment.content,
-        createdAt: comment.createdAt,
-        likes: comment.likes?.length || 0,
-      })),
-      createdAt: post.createdAt,
-      isLiked: post.isLiked || false,
-      isSaved: post.isBookmarked || false,
-    }
-    setSelectedPost(postData)
+    setSelectedPostId(post._id)
     setIsDialogOpen(true)
   }
 
@@ -105,11 +83,11 @@ export default function Page() {
       <RightSidebar />
 
       {/* Post Detail Dialog */}
-      {selectedPost && (
+      {selectedPostId && (
         <InstagramPostDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          post={selectedPost}
+          postId={selectedPostId}
         />
       )}
     </div>
