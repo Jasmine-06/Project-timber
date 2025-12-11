@@ -10,51 +10,40 @@ import {
   X,
   Loader2
 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useGetPostById } from "@/hooks/use-get-post-by-id";
 import { useGetPostComments } from "@/hooks/use-get-post-comments";
 import { useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from "@/hooks/use-comment-mutations";
 import { useAuthStore } from "@/store/auth-store";
 import { useToggleLike } from "@/hooks/use-toggle-like";
-import { useToggleBookmark } from "@/hooks/use-toggle-bookmark";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNow } from 'date-fns';
 
 interface InstagramPostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  postId: string;
+  post: IPost;
 }
 
-const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialogProps) => {
+const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogProps) => {
   const { user } = useAuthStore();
-  const { data: postData, isLoading: isPostLoading } = useGetPostById(postId);
-  const { data: commentsData, isLoading: isCommentsLoading } = useGetPostComments(postId);
+  // removed useGetPostById
+  const { data: commentsData, isLoading: isCommentsLoading } = useGetPostComments(post._id);
   const { mutate: createComment, isPending: isCreatingComment } = useCreateCommentMutation();
   const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteCommentMutation();
   const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateCommentMutation();
+  const { mutate: toggleLike } = useToggleLike();
 
-  const toggleLikeMutation = useToggleLike();
-  const toggleBookmarkMutation = useToggleBookmark();
-
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [comment, setComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
-
-  const isLoading = isPostLoading || isCommentsLoading;
-  const post = postData;
-
-  const handleLike = () => {
-    toggleLikeMutation.mutate({ post_id: postId });
-  }
-
-  const handleBookmark = () => {
-    toggleBookmarkMutation.mutate({ post_id: postId });
-  }
 
   const handlePostComment = () => {
     if (!comment.trim()) return;
 
     createComment({
-      post_id: postId,
+      post_id: post._id,
       content: comment
     }, {
       onSuccess: () => {
@@ -90,7 +79,12 @@ const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialog
     });
   }
 
-
+  useEffect(() => {
+    if (post) {
+      setLiked(post.isLiked || false);
+      setSaved(post.isBookmarked || false);
+    }
+  }, [post]);
 
   useEffect(() => {
     if (open) {
@@ -106,15 +100,11 @@ const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialog
   if (!open) return null;
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d`;
-    return date.toLocaleDateString();
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (error) {
+      return '';
+    }
   };
 
   const getAuthor = (user: string | IUser) => {
@@ -143,19 +133,7 @@ const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialog
     }
   }
 
-  if (isLoading || !post) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div
-          className="absolute inset-0 bg-black/90 backdrop-blur-md"
-          onClick={() => onOpenChange(false)}
-        />
-        <div className="relative z-50 flex items-center justify-center p-4">
-          <Loader2 className="w-10 h-10 text-white animate-spin" />
-        </div>
-      </div>
-    )
-  }
+  if (!open) return null;
 
   const author = getAuthor(post.user_id);
   const imageUrl = post.images && post.images.length > 0 ? post.images[0] : undefined;
@@ -253,108 +231,122 @@ const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialog
               )}
 
               {/* Comments */}
-              {commentsData?.map((c: IComment) => {
-                const commentAuthor = getCommentAuthor(c.user_id);
-                const isMyComment = typeof c.user_id === 'object'
-                  ? c.user_id._id === user?._id
-                  : c.user_id === user?._id;
-                const isEditing = editingCommentId === c._id;
-
-                return (
-                  <div key={c._id} className="flex gap-3 group hover:bg-secondary/20 -mx-2 px-2 py-2 rounded-lg transition-colors">
-                    <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-border/10">
-                      <AvatarImage src={commentAuthor.avatar} />
-                      <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-muted-foreground text-sm font-semibold">
-                        {commentAuthor.username[0].toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-bold text-sm text-foreground">{commentAuthor.username}</span>
-                          <span className="text-xs text-muted-foreground font-medium">{formatTime(c.createdAt)}</span>
-                        </div>
-
-                        {isEditing ? (
-                          <div className="flex flex-col gap-2 mt-1">
-                            <Input
-                              value={editContent}
-                              onChange={(e) => setEditContent(e.target.value)}
-                              className="h-9 text-sm border-border/50 focus-visible:ring-2 focus-visible:ring-[hsl(var(--instagram-blue))]/20"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleUpdateComment(c._id);
-                                } else if (e.key === 'Escape') {
-                                  cancelEditing();
-                                }
-                              }}
-                            />
-                            <div className="flex gap-3 text-xs">
-                              <button
-                                onClick={() => handleUpdateComment(c._id)}
-                                disabled={isUpdatingComment}
-                                className="font-bold text-[hsl(var(--instagram-blue))] hover:text-[hsl(var(--instagram-blue))]/80 disabled:opacity-50 transition-colors"
-                              >
-                                {isUpdatingComment ? "Saving..." : "Save"}
-                              </button>
-                              <button
-                                onClick={cancelEditing}
-                                className="font-bold text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-foreground/90 leading-relaxed">
-                            {c.content}
-                          </p>
-                        )}
+              {isCommentsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3 px-2">
+                      <Skeleton className="w-9 h-9 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-full" />
                       </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                commentsData?.map((c: IComment) => {
+                  const commentAuthor = getCommentAuthor(c.user_id);
+                  const isMyComment = typeof c.user_id === 'object'
+                    ? c.user_id._id === user?._id
+                    : c.user_id === user?._id;
+                  const isEditing = editingCommentId === c._id;
 
-                      {!isEditing && (
-                        <div className="flex items-center gap-4 mt-2">
-                          <button className="text-xs text-muted-foreground font-bold hover:text-foreground transition-colors">
-                            Reply
-                          </button>
-                          {isMyComment && (
-                            <>
-                              <button
-                                onClick={() => startEditing(c._id, c.content)}
-                                className="text-xs text-muted-foreground font-bold hover:text-foreground transition-colors"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteComment(c._id)}
-                                disabled={isDeletingComment}
-                                className="text-xs text-red-500 font-bold hover:text-red-600 disabled:opacity-50 transition-colors"
-                              >
-                                {isDeletingComment ? "Deleting..." : "Delete"}
-                              </button>
-                            </>
+                  return (
+                    <div key={c._id} className="flex gap-3 group hover:bg-secondary/20 -mx-2 px-2 py-2 rounded-lg transition-colors">
+                      {/* ... existing comment render logic ... */}
+                      <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-border/10">
+                        <AvatarImage src={commentAuthor.avatar} />
+                        <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-muted-foreground text-sm font-semibold">
+                          {commentAuthor.username[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-bold text-sm text-foreground">{commentAuthor.username}</span>
+                            <span className="text-xs text-muted-foreground font-medium">{formatTime(c.createdAt)}</span>
+                          </div>
+
+                          {isEditing ? (
+                            <div className="flex flex-col gap-2 mt-1">
+                              <Input
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="h-9 text-sm border-border/50 focus-visible:ring-2 focus-visible:ring-[hsl(var(--instagram-blue))]/20"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleUpdateComment(c._id);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditing();
+                                  }
+                                }}
+                              />
+                              <div className="flex gap-3 text-xs">
+                                <button
+                                  onClick={() => handleUpdateComment(c._id)}
+                                  disabled={isUpdatingComment}
+                                  className="font-bold text-[hsl(var(--instagram-blue))] hover:text-[hsl(var(--instagram-blue))]/80 disabled:opacity-50 transition-colors"
+                                >
+                                  {isUpdatingComment ? "Saving..." : "Save"}
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  className="font-bold text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-foreground/90 leading-relaxed">
+                              {c.content}
+                            </p>
                           )}
                         </div>
-                      )}
+
+                        {!isEditing && (
+                          <div className="flex items-center gap-4 mt-2">
+                            <button className="text-xs text-muted-foreground font-bold hover:text-foreground transition-colors">
+                              Reply
+                            </button>
+                            {isMyComment && (
+                              <>
+                                <button
+                                  onClick={() => startEditing(c._id, c.content)}
+                                  className="text-xs text-muted-foreground font-bold hover:text-foreground transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteComment(c._id)}
+                                  disabled={isDeletingComment}
+                                  className="text-xs text-red-500 font-bold hover:text-red-600 disabled:opacity-50 transition-colors"
+                                >
+                                  {isDeletingComment ? "Deleting..." : "Delete"}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              )}
             </div>
 
-            {/* Actions */}
             {/* Actions */}
             <div className="border-t border-border/50 px-5 py-4 space-y-3 bg-gradient-to-t from-background/50 to-transparent">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-5">
                   <button
-                    onClick={handleLike}
+                    onClick={() => setLiked(!liked)}
                     className="hover:scale-110 transition-transform duration-200"
                   >
                     <Heart
-                      className={`w-7 h-7 transition-all ${post?.isLiked ? 'fill-[hsl(var(--instagram-red))] text-[hsl(var(--instagram-red))] scale-110' : 'text-foreground'}`}
+                      className={`w-7 h-7 transition-all ${liked ? 'fill-[hsl(var(--instagram-red))] text-[hsl(var(--instagram-red))] scale-110' : 'text-foreground'}`}
                     />
                   </button>
                   <button className="hover:scale-110 transition-transform duration-200">
@@ -362,11 +354,11 @@ const InstagramPostDialog = ({ open, onOpenChange, postId }: InstagramPostDialog
                   </button>
                 </div>
                 <button
-                  onClick={handleBookmark}
+                  onClick={() => setSaved(!saved)}
                   className="hover:scale-110 transition-transform duration-200"
                 >
                   <Bookmark
-                    className={`w-7 h-7 transition-all ${post?.isBookmarked ? 'fill-foreground scale-110' : ''} text-foreground`}
+                    className={`w-7 h-7 transition-all ${saved ? 'fill-foreground scale-110' : ''} text-foreground`}
                   />
                 </button>
               </div>

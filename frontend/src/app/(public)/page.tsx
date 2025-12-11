@@ -8,14 +8,15 @@ import { useGetPosts } from '@/hooks/use-get-posts'
 import { useAuthStore } from '@/store/auth-store'
 import { Loader2 } from 'lucide-react'
 
+
 export default function Page() {
   const { data: posts, isLoading, isError, error } = useGetPosts()
   const { user } = useAuthStore()
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
+  const [selectedPost, setSelectedPost] = useState<IPost | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleCommentClick = (post: any) => {
-    setSelectedPostId(post._id)
+  const handleCommentClick = (post: IPost) => {
+    setSelectedPost(post)
     setIsDialogOpen(true)
   }
 
@@ -24,30 +25,20 @@ export default function Page() {
       {/* Main Feed */}
       <div className="flex flex-col w-full md:max-w-[640px]">
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center justify-center py-10">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
         {isError && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-destructive font-semibold mb-2">Failed to load posts</p>
-              <p className="text-sm text-muted-foreground">
-                {error?.message || 'Please try again later'}
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center py-10">
+            <p className="text-red-500">Something went wrong. Please try again later.</p>
           </div>
         )}
 
-        {!isLoading && !isError && posts && posts.length === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-muted-foreground">No posts yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Be the first to share something!
-              </p>
-            </div>
+        {!isLoading && !isError && posts?.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-10">
+            <p className="text-muted-foreground">No posts yet</p>
           </div>
         )}
 
@@ -83,11 +74,11 @@ export default function Page() {
       <RightSidebar />
 
       {/* Post Detail Dialog */}
-      {selectedPostId && (
+      {selectedPost && (
         <InstagramPostDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          postId={selectedPostId}
+          post={selectedPost}
         />
       )}
     </div>
