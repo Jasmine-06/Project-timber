@@ -1,20 +1,12 @@
 "use client";
 
-import { Search, Bell, MessageCircle, Plus, User, LogOut, Settings, Leaf } from 'lucide-react'
+import { Search, MessageCircle, Plus, Leaf } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { useAuthStore } from '@/store/auth-store'
 import Link from 'next/link'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 import { useState } from 'react'
@@ -23,6 +15,8 @@ import { useSearchUsers } from '@/hooks/use-search-users'
 import { AvatarImage } from "@/components/ui/avatar"
 import { CreatePostDialog } from './CreatePostDialog'
 import { useQueryClient } from '@tanstack/react-query'
+import ProfileDropdown from '@/components/kokonutui/profile-dropdown'
+import { ThemeSwitcher } from '@/components/kibo-ui/theme-switcher'
 
 export function SiteHeader() {
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
@@ -44,7 +38,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
@@ -75,7 +69,7 @@ export function SiteHeader() {
           {/* Search Results Dropdown */}
           {isSearchFocused && debouncedSearch && (
             <div 
-              className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50"
+              className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50"
               onMouseDown={(e) => e.preventDefault()} // Prevent input blur when clicking inside dropdown
             >
               {isSearching ? (
@@ -113,57 +107,36 @@ export function SiteHeader() {
 
       {/* Right Actions */}
       <div className="flex items-center gap-1 md:gap-2 ml-auto">
-        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground">
-          <Search className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground h-10 w-10">
+          <Search className="h-[22px] w-[22px]" />
         </Button>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="hidden sm:flex text-muted-foreground"
+          className="hidden sm:flex text-muted-foreground h-10 w-10"
           onClick={() => setIsCreatePostOpen(true)}
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-[22px] w-[22px]" />
         </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <Bell className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="h-10 w-10">
+          <MessageCircle className="h-[22px] w-[22px]" />
         </Button>
-        <Button variant="ghost" size="icon">
-          <MessageCircle className="h-5 w-5" />
-        </Button>
+
+        <ThemeSwitcher />
 
         <div className="ml-2">
           {isLoading ? (
             <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-          ) : isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profile_picture} alt={user?.name || "User"} />
-                    <AvatarFallback>{user?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={`/u/${user?.username}`}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          ) : isAuthenticated && user ? (
+            <ProfileDropdown 
+              data={{
+                name: user.name,
+                email: user.email,
+                avatar: user.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`,
+              }}
+              username={user.username}
+              onLogout={handleLogout}
+            />
           ) : (
             <Button asChild className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               <Link href="/login">

@@ -129,14 +129,11 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
                 <div className="mt-3">
                   {previewUrls.length > 0 ? (
                     <div className="border border-border rounded-2xl overflow-hidden">
-                      <div className={`grid ${previewUrls.length === 1 ? 'grid-cols-1' : previewUrls.length === 2 ? 'grid-cols-2' : previewUrls.length === 3 ? 'grid-cols-2' : 'grid-cols-2'} gap-0.5`}>
+                      <div className={`grid ${previewUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-0.5`}>
                         {previewUrls.map((url, index) => (
                           <div
                             key={index}
-                            className={`relative bg-black overflow-hidden group ${previewUrls.length === 1 ? 'aspect-[16/10]' :
-                              previewUrls.length === 3 && index === 0 ? 'row-span-2 aspect-square' :
-                                'aect-square'
-                              }`}
+                            className="relative bg-black overflow-hidden group aspect-square"
                           >
                             <img src={url} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
