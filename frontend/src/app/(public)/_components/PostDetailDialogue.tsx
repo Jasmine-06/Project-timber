@@ -14,6 +14,7 @@ import { useGetPostComments } from "@/hooks/use-get-post-comments";
 import { useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from "@/hooks/use-comment-mutations";
 import { useAuthStore } from "@/store/auth-store";
 import { useToggleLike } from "@/hooks/use-toggle-like";
+import { useToggleBookmark } from "@/hooks/use-toggle-bookmark";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
@@ -32,8 +33,10 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
   const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteCommentMutation();
   const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateCommentMutation();
   const { mutate: toggleLike } = useToggleLike();
+  const { mutate: toggleBookmark } = useToggleBookmark();
 
   const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
   const [saved, setSaved] = useState(false);
   const [comment, setComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -79,10 +82,22 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
     });
   }
 
+  const handleLike = () => {
+    toggleLike({ post_id: post._id });
+    setLiked(!liked);
+    setLikesCount(prev => liked ? prev - 1 : prev + 1);
+  };
+
+  const handleBookmark = () => {
+    toggleBookmark({ post_id: post._id });
+    setSaved(!saved);
+  };
+
   useEffect(() => {
     if (post) {
       setLiked(post.isLiked || false);
       setSaved(post.isBookmarked || false);
+      setLikesCount(post.likes || 0);
     }
   }, [post]);
 
@@ -344,7 +359,7 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => setLiked(!liked)}
+                      onClick={handleLike}
                       className="hover:scale-110 transition-transform duration-200"
                     >
                       <Heart
@@ -356,7 +371,7 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                     </button>
                   </div>
                   <button
-                    onClick={() => setSaved(!saved)}
+                    onClick={handleBookmark}
                     className="hover:scale-110 transition-transform duration-200"
                   >
                     <Bookmark
@@ -366,7 +381,7 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-foreground">{(post.likes || 0).toLocaleString()} likes</p>
+                  <p className="text-sm font-bold text-foreground">{(likesCount).toLocaleString()} likes</p>
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{formatTime(post.createdAt)}</p>
                 </div>
               </div>
