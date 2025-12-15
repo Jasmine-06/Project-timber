@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { PostCard } from './_components/PostCard'
-import { RightSidebar } from './_components/RightSidebar'
+import RightSidebar from './_components/RightSidebar'
 import InstagramPostDialog from './_components/PostDetailDialogue'
 import { useGetPosts } from '@/hooks/use-get-posts'
 import { useAuthStore } from '@/store/auth-store'
 import { Loader2 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 
 
 export default function Page() {
@@ -21,9 +22,9 @@ export default function Page() {
   }
 
   return (
-    <div className="flex gap-8 justify-center">
+    <div className="flex gap-16 justify-center max-w-5xl mx-auto px-4">
       {/* Main Feed */}
-      <div className="flex flex-col w-full md:max-w-[640px]">
+      <div className="flex flex-col w-full max-w-[470px]">
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-10">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -54,7 +55,7 @@ export default function Page() {
                   postId={post._id}
                   username={author?.username || 'Unknown'}
                   userAvatar={author?.profile_picture}
-                  timeAgo={formatTimeAgo(post.createdAt)}
+                  timeAgo={formatDistanceToNow(new Date(post.createdAt), { addSuffix: false })}
                   caption={post.caption}
                   images={post.images || []}
                   likesCount={post.likes ?? 0}
@@ -83,25 +84,4 @@ export default function Page() {
       )}
     </div>
   )
-}
-
-// Helper function to format time ago
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-  if (seconds < 60) return `${seconds}s`
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d`
-  const weeks = Math.floor(days / 7)
-  if (weeks < 4) return `${weeks}w`
-  const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo`
-  const years = Math.floor(days / 365)
-  return `${years}y`
 }

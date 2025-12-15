@@ -94,9 +94,9 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} className="text-[15px] font-normal py-2.5">
+                  <SidebarMenuButton asChild tooltip={item.title} className="text-base font-normal py-2.5 h-12">
                     <Link href={item.url}>
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-7 w-7" strokeWidth={1.5} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

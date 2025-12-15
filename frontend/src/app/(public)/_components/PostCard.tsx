@@ -58,7 +58,7 @@ export function PostCard({
   return (
     <article className="w-full bg-card border-b border-border">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5">
+      <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
           <Avatar className="h-8 w-8">
             <AvatarImage src={userAvatar} />
@@ -81,18 +81,18 @@ export function PostCard({
 
       {/* Image */}
       {images.length > 0 && (
-        <div className="w-full bg-muted/20 max-h-[600px] overflow-hidden flex items-center justify-center">
+        <div className="w-full aspect-square overflow-hidden bg-black dark:bg-black">
           <img
             src={images[0]}
             alt={`Post by ${username}`}
-            className="w-[90%] h-full max-h-[600px] object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
       )}
 
       {/* Actions */}
-      <div className="px-3 py-2">
-        <div className="flex items-center justify-between mb-2">
+      <div className="px-4 py-2">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -101,8 +101,9 @@ export function PostCard({
               onClick={handleLike}
             >
               <Heart
-                className={`h-[28px] w-[28px] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
+                className={`w-8 h-8 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
                   }`}
+                strokeWidth={1.2}
               />
             </Button>
             <Button
@@ -111,7 +112,7 @@ export function PostCard({
               className="h-12 w-12 hover:bg-transparent p-0"
               onClick={onComment}
             >
-              <MessageCircle className="h-[28px] w-[28px]" />
+              <MessageCircle className="w-8 h-8" strokeWidth={1.2} />
             </Button>
           </div>
           <Button
@@ -121,8 +122,9 @@ export function PostCard({
             onClick={handleBookmark}
           >
             <Bookmark
-              className={`h-[28px] w-[28px] transition-colors ${isBookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
+              className={`w-8 h-8 transition-colors ${isBookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
                 }`}
+              strokeWidth={1.2}
             />
           </Button>
         </div>
@@ -140,13 +142,7 @@ export function PostCard({
           </div>
         )}
 
-        {/* User's Comment */}
-        {userComment && (
-          <div className="text-sm mb-1.5 bg-muted/30 rounded-md px-2 py-1.5">
-            <span className="font-semibold mr-1.5 text-primary">You</span>
-            <span className="whitespace-pre-wrap">{userComment.content}</span>
-          </div>
-        )}
+
 
         {/* Comments Count */}
         {commentsCount > 0 && (
