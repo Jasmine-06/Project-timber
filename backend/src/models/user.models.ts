@@ -1,4 +1,4 @@
-import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import mongoose, { Schema, Types, type InferSchemaType } from "mongoose";
 
 export enum UserRole {
   USER = "user",
@@ -23,9 +23,9 @@ export interface IUserCreateSchema {
   is_verified?: boolean;
   bio?: string;
   interests?: string[];
-  communities?: Schema.Types.ObjectId[];
-  following?: Schema.Types.ObjectId[];
-  followers?: Schema.Types.ObjectId[];
+  communities?: Types.ObjectId[];
+  following?: Types.ObjectId[];
+  followers?: Types.ObjectId[];
   profile_picture?: string;
 }
 

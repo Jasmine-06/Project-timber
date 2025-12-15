@@ -1,6 +1,6 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema, Types, type InferSchemaType } from "mongoose";
 
-export interface ICommunity {
+export interface ICommunitySchema {
     _id: Types.ObjectId;
     image: string;
     name: string;
@@ -12,7 +12,7 @@ export interface ICommunity {
     isPrivate: boolean;
 }
 
-const communitySchema = new Schema<ICommunity>(
+const communitySchema = new Schema<ICommunitySchema>(
     {
         image: {
             type: String,
@@ -71,3 +71,5 @@ communitySchema.pre("save", function () {
 
 
 export const Community = model<ICommunity>("Community", communitySchema);
+
+export type ICommunity = InferSchemaType<typeof communitySchema>;
