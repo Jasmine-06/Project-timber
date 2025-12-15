@@ -6,12 +6,14 @@ import { UserRepository } from "../repositories/user.repository";
 export const CommunityService = {
   createCommunity: async (data: {
     name: string;
-    bio?: string;
+    description?: string;
     image?: string;
-    admin_id: string;
+    avatar?: string;
+    isPrivate?: boolean;
+    owner: string;
   }) => {
     logger.debug({ data }, "createCommunity service called");
-    const { name, bio, image, admin_id } = data;
+    const { name, description, image, avatar, isPrivate, owner } = data;
 
     const existingCommunity = await CommunityRepository.findCommunityByName(
       name
@@ -22,18 +24,20 @@ export const CommunityService = {
 
     const newCommunity = await CommunityRepository.createCommunity({
       name,
-      bio,
+      description,
       image,
-      admin_id: admin_id as any,
-      users: [admin_id as any], // Admin is automatically a member
+      avatar,
+      isPrivate: isPrivate ?? false,
+      owner: owner as any,
+      // Owner is automatically added to admins and members via pre-save hook
     });
 
     if (!newCommunity) {
       throw new ApiError(500, "Failed to create community");
     }
 
-    // Add community to admin's list
-    await UserRepository.addCommunityToUser(admin_id, String(newCommunity._id));
+    // Add community to owner's list
+    await UserRepository.addCommunityToUser(owner, String(newCommunity._id));
 
     return newCommunity;
   },
@@ -72,7 +76,13 @@ export const CommunityService = {
   updateCommunity: async (
     id: string,
     userId: string,
-    updateData: { name?: string; bio?: string; image?: string }
+    updateData: {
+      name?: string;
+      description?: string;
+      image?: string;
+      avatar?: string;
+      isPrivate?: boolean;
+    }
   ) => {
     logger.debug({ id, userId, updateData }, "updateCommunity service called");
 
@@ -81,8 +91,9 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    if (String((community.admin_id as any)._id) !== userId) {
-      throw new ApiError(403, "Only admin can update community details");
+    // Only owner can update community details
+    if (String((community.owner as any)._id) !== userId) {
+      throw new ApiError(403, "Only owner can update community details");
     }
 
     const updatedCommunity = await CommunityRepository.updateCommunityById(
@@ -100,12 +111,20 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
+    // Check if community is private
+    if (community.isPrivate) {
+      throw new ApiError(
+        403,
+        "This is a private community. Join requests are not currently supported."
+      );
+    }
+
     // Check if user is already a member
-    if (community.users.some((user: any) => String(user._id) === userId)) {
+    if (community.members.some((member: any) => String(member._id) === userId)) {
       throw new ApiError(400, "User is already a member of this community");
     }
 
-    await CommunityRepository.addUserToCommunity(communityId, userId);
+    await CommunityRepository.addMemberToCommunity(communityId, userId);
 
     // Update user's communities list
     await UserRepository.addCommunityToUser(userId, communityId);
@@ -121,14 +140,20 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    if (String((community.admin_id as any)._id) === userId) {
+    // Owner cannot leave the community
+    if (String((community.owner as any)._id) === userId) {
       throw new ApiError(
         400,
-        "Admin cannot leave the community. Delete the community or transfer ownership."
+        "Owner cannot leave the community. Delete the community or transfer ownership."
       );
     }
 
-    await CommunityRepository.removeUserFromCommunity(communityId, userId);
+    // If user is an admin, remove from admins first
+    if (community.admins.some((admin: any) => String(admin._id) === userId)) {
+      await CommunityRepository.removeAdminFromCommunity(communityId, userId);
+    }
+
+    await CommunityRepository.removeMemberFromCommunity(communityId, userId);
 
     // Update user's communities list
     await UserRepository.removeCommunityFromUser(userId, communityId);
@@ -144,8 +169,9 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    if (String((community.admin_id as any)._id) !== userId) {
-      throw new ApiError(403, "Only admin can delete the community");
+    // Only owner can delete the community
+    if (String((community.owner as any)._id) !== userId) {
+      throw new ApiError(403, "Only owner can delete the community");
     }
 
     await CommunityRepository.deleteCommunityById(communityId);
@@ -154,5 +180,97 @@ export const CommunityService = {
     await UserRepository.removeCommunityFromAllUsers(communityId);
 
     return { message: "Community deleted successfully" };
+  },
+
+  addAdmin: async (
+    communityId: string,
+    ownerId: string,
+    targetUserId: string
+  ) => {
+    logger.debug(
+      { communityId, ownerId, targetUserId },
+      "addAdmin service called"
+    );
+
+    const community = await CommunityRepository.findCommunityById(communityId);
+    if (!community) {
+      throw new ApiError(404, "Community not found");
+    }
+
+    // Only owner can add admins
+    if (String((community.owner as any)._id) !== ownerId) {
+      throw new ApiError(403, "Only owner can add admins");
+    }
+
+    // Check if target user is a member
+    const isMember = community.members.some(
+      (member: any) => String(member._id) === targetUserId
+    );
+    if (!isMember) {
+      throw new ApiError(400, "User must be a member to become an admin");
+    }
+
+    // Check if already an admin
+    const isAlreadyAdmin = community.admins.some(
+      (admin: any) => String(admin._id) === targetUserId
+    );
+    if (isAlreadyAdmin) {
+      throw new ApiError(400, "User is already an admin");
+    }
+
+    await CommunityRepository.addAdminToCommunity(communityId, targetUserId);
+
+    return { message: "Admin added successfully" };
+  },
+
+  removeAdmin: async (
+    communityId: string,
+    ownerId: string,
+    targetUserId: string
+  ) => {
+    logger.debug(
+      { communityId, ownerId, targetUserId },
+      "removeAdmin service called"
+    );
+
+    const community = await CommunityRepository.findCommunityById(communityId);
+    if (!community) {
+      throw new ApiError(404, "Community not found");
+    }
+
+    // Only owner can remove admins
+    if (String((community.owner as any)._id) !== ownerId) {
+      throw new ApiError(403, "Only owner can remove admins");
+    }
+
+    // Cannot remove owner from admins
+    if (String((community.owner as any)._id) === targetUserId) {
+      throw new ApiError(400, "Cannot remove owner from admins");
+    }
+
+    // Check if user is an admin
+    const isAdmin = community.admins.some(
+      (admin: any) => String(admin._id) === targetUserId
+    );
+    if (!isAdmin) {
+      throw new ApiError(400, "User is not an admin");
+    }
+
+    await CommunityRepository.removeAdminFromCommunity(
+      communityId,
+      targetUserId
+    );
+
+    return { message: "Admin removed successfully" };
+  },
+
+  getCommunitiesByUser: async (userId: string) => {
+    logger.debug({ userId }, "getCommunitiesByUser service called");
+
+    const communities = await CommunityRepository.findCommunitiesByMember(
+      userId
+    );
+
+    return { communities };
   },
 };
