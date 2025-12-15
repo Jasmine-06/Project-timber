@@ -28,7 +28,17 @@ interface TypingPayload {
   isTyping: boolean;
 }
 
+let ioInstance: Server;
+
+export const getIO = () => {
+  if (!ioInstance) {
+    throw new Error("Socket.IO not initialized");
+  }
+  return ioInstance;
+};
+
 export const setupSocketHandlers = async (io: Server) => {
+  ioInstance = io;
 
   io.adapter(createAdapter(pubClient, subClient));
 

@@ -1,18 +1,6 @@
 import { model, Schema, Types, type InferSchemaType } from "mongoose";
 
-export interface ICommunitySchema {
-    _id: Types.ObjectId;
-    image: string;
-    name: string;
-    description: string;
-    avatar?: string;
-    owner: Types.ObjectId;
-    admins: Types.ObjectId[];
-    members: Types.ObjectId[];
-    isPrivate: boolean;
-}
-
-const communitySchema = new Schema<ICommunitySchema>(
+const communitySchema = new Schema(
     {
         image: {
             type: String,
@@ -69,7 +57,15 @@ communitySchema.pre("save", function () {
     }
 });
 
+// Virtual for member count
+communitySchema.virtual("memberCount").get(function () {
+    return this.members?.length || 0;
+});
 
-export const Community = model<ICommunity>("Community", communitySchema);
+// Ensure virtuals are included in JSON
+communitySchema.set("toJSON", { virtuals: true });
+communitySchema.set("toObject", { virtuals: true });
+
+export const Community = model("Community", communitySchema);
 
 export type ICommunity = InferSchemaType<typeof communitySchema>;

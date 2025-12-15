@@ -75,4 +75,3 @@ messageSchema.index({ community: 1, createdAt: -1 });
 export const Message = mongoose.model<IMessage>("Message", messageSchema);
 
 export type IMessageSchema = InferSchemaType<typeof messageSchema>;
-// export const Community = model<ICommunity>("Community", communitySchema);
