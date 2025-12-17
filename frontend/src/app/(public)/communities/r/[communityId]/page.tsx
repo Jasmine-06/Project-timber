@@ -1,101 +1,79 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import ParticleButton from "@/components/kokonutui/particle-button";
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth-store";
+import { useChatStore } from "@/store/chat-store";
+import { socketService } from "@/lib/socket";
 import { CommunityActions } from "@/api-actions/community-actions";
 import { ChatArea } from "@/components/chat/chat-area";
+import { CommunityMembers } from "@/components/chat/community-members";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CommunityPage() {
   const params = useParams();
+  const router = useRouter();
   const communityId = params.communityId as string;
-  const [community, setCommunity] = useState<ICommunity | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading, user } = useAuthStore();
+  const { activeCommunity, setActiveCommunity } = useChatStore();
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    async function fetchCommunity() {
-      try {
-        setLoading(true);
-        const data = await CommunityActions.GetCommunityByIdAction(communityId);
-        setCommunity(data);
-      } catch (error) {
-        console.error("Failed to fetch community:", error);
-      } finally {
-        setLoading(false);
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (!socketService.isConnected()) {
+        socketService.connect(user._id);
       }
     }
 
-    if (communityId) {
+    return () => {
+      if (socketService.isConnected()) {
+        socketService.disconnect();
+      }
+    };
+  }, [isAuthenticated, user]);
+
+  // Fetch and set active community
+  useEffect(() => {
+    async function fetchCommunity() {
+      try {
+        const data = await CommunityActions.GetCommunityByIdAction(communityId);
+        setActiveCommunity(data);
+      } catch (error) {
+        console.error("Failed to fetch community:", error);
+        toast.error("Failed to load community");
+        router.push("/communities");
+      }
+    }
+
+    if (communityId && isAuthenticated) {
       fetchCommunity();
     }
-  }, [communityId]);
+  }, [communityId, isAuthenticated, setActiveCommunity, router]);
 
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!community) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Community not found</p>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      {/* Community Header */}
-      <div className="bg-card border-b border-border shrink-0">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Community Avatar */}
-              <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                {community.avatar ? (
-                  <Avatar className="h-16 w-16 rounded-lg">
-                    <AvatarImage src={community.avatar} />
-                    <AvatarFallback className="bg-transparent text-white text-2xl rounded-lg">
-                      {community.name?.charAt(0).toUpperCase() || "#"}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <span className="text-3xl text-white font-bold">
-                    {community.name?.charAt(0).toUpperCase() || "#"}
-                  </span>
-                )}
-              </div>
-
-              {/* Community Info */}
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{community.name}</h1>
-                <p className="text-sm text-muted-foreground">{community.description}</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <ParticleButton 
-              variant="outline" 
-              size="default" 
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
-            >
-              Join
-            </ParticleButton>
-          </div>
-        </div>
-      </div>
-
-      {/* Community Content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 py-6 h-full flex flex-col">
-          <ChatArea community={community} />
-        </div>
-      </div>
+    <div className="flex-1 bg-background flex overflow-hidden">
+      <ChatArea />
+      {activeCommunity && <CommunityMembers community={activeCommunity} />}
     </div>
   );
 }

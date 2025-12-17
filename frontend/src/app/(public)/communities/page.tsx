@@ -1,28 +1,79 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { CommunityActions } from "@/api-actions/community-actions";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useDebounce } from "@/hooks/use-debounce";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CommunityActions } from "@/api-actions/community-actions";
+import { Loader2, Plus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CommunitiesPage() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
+  const queryClient = useQueryClient();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    avatar: "",
+  });
 
   const { data: communitiesResponse, isLoading } = useQuery({
-    queryKey: ["communities", "all", debouncedSearch],
-    queryFn: () => CommunityActions.GetAllCommunitiesAction(1, 50, debouncedSearch),
+    queryKey: ["communities", "all"],
+    queryFn: () => CommunityActions.GetAllCommunitiesAction(1, 50, ""),
   });
 
   const communities = communitiesResponse?.communities || [];
 
   const handleCommunityClick = (communityId: string) => {
     router.push(`/communities/r/${communityId}`);
+  };
+
+  const handleCreateCommunity = async () => {
+    if (!formData.name.trim() || !formData.description.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const newCommunity = await CommunityActions.CreateCommunityAction({
+        name: formData.name,
+        description: formData.description,
+        avatar: formData.avatar || undefined,
+      });
+      
+      // Invalidate and refetch communities
+      await queryClient.invalidateQueries({ 
+        queryKey: ["communities"],
+        refetchType: "active"
+      });
+      
+      toast.success("Community created successfully!");
+      setIsCreateOpen(false);
+      setFormData({ name: "", description: "", avatar: "" });
+      
+      // Navigate to the new community
+      router.push(`/communities/r/${newCommunity._id}`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create community");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -34,14 +85,66 @@ export default function CommunitiesPage() {
             <h1 className="text-xl font-semibold text-foreground mb-1">Top Communities</h1>
             <p className="text-sm text-muted-foreground">Timber's largest communities</p>
           </div>
-          <div className="w-full md:w-64">
-            <Input
-              placeholder="Search communities..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-muted/50"
-            />
-          </div>
+          
+          {/* Create Community Button */}
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Community
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Community</DialogTitle>
+                <DialogDescription>
+                  Create a new community for people to join and discuss
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    placeholder="Community name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="What's this community about?"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateCommunity} disabled={isCreating}>
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

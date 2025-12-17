@@ -110,12 +110,12 @@ export const CommunityActions = {
         communityId: string,
         limit: number = 50,
         before?: string
-    ): Promise<any[]> => {
+    ): Promise<IMessage[]> => {
         let url = `/community/${communityId}/messages?limit=${limit}`;
         if (before) {
             url += `&before=${before}`;
         }
-        const response = await axiosInstance.get<ApiResponse<{ data: any[] }>>(url);
+        const response = await axiosInstance.get<ApiResponse<{ data: IMessage[] }>>(url);
         return response.data.data!.data;
     },
 };

@@ -15,7 +15,7 @@ export default function RootLayout({
         <AppSidebar />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col bg-background min-h-screen pb-14 md:pb-0">
+          <div className="flex flex-1 flex-col bg-background relative pb-14 md:pb-0">
             {children}
           </div>
           <MobileNav />

@@ -92,9 +92,10 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    // Only owner can update community details
-    if (String((community.owner as any)._id) !== userId) {
-      throw new ApiError(403, "Only owner can update community details");
+    // Only admins can update community details
+    const isAdmin = community.admins.some((admin: any) => String(admin._id) === userId);
+    if (!isAdmin) {
+      throw new ApiError(403, "Only admins can update community details");
     }
 
     const updatedCommunity = await CommunityRepository.updateCommunityById(
@@ -141,12 +142,10 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    // Owner cannot leave the community
-    if (String((community.owner as any)._id) === userId) {
-      throw new ApiError(
-        400,
-        "Owner cannot leave the community. Delete the community or transfer ownership."
-      );
+    // Check if user is a member
+    const isMember = community.members.some((member: any) => String(member._id) === userId);
+    if (!isMember) {
+      throw new ApiError(400, "User is not a member of this community");
     }
 
     // If user is an admin, remove from admins first
@@ -170,9 +169,10 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    // Only owner can delete the community
-    if (String((community.owner as any)._id) !== userId) {
-      throw new ApiError(403, "Only owner can delete the community");
+    // Only admins can delete the community
+    const isAdmin = community.admins.some((admin: any) => String(admin._id) === userId);
+    if (!isAdmin) {
+      throw new ApiError(403, "Only admins can delete the community");
     }
 
     await CommunityRepository.deleteCommunityById(communityId);
@@ -185,11 +185,11 @@ export const CommunityService = {
 
   addAdmin: async (
     communityId: string,
-    ownerId: string,
+    requesterId: string,
     targetUserId: string
   ) => {
     logger.debug(
-      { communityId, ownerId, targetUserId },
+      { communityId, requesterId, targetUserId },
       "addAdmin service called"
     );
 
@@ -198,9 +198,12 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    // Only owner can add admins
-    if (String((community.owner as any)._id) !== ownerId) {
-      throw new ApiError(403, "Only owner can add admins");
+    // Only admins can add other admins
+    const isRequesterAdmin = community.admins.some(
+      (admin: any) => String(admin._id) === requesterId
+    );
+    if (!isRequesterAdmin) {
+      throw new ApiError(403, "Only admins can add other admins");
     }
 
     // Check if target user is a member
@@ -226,11 +229,11 @@ export const CommunityService = {
 
   removeAdmin: async (
     communityId: string,
-    ownerId: string,
+    requesterId: string,
     targetUserId: string
   ) => {
     logger.debug(
-      { communityId, ownerId, targetUserId },
+      { communityId, requesterId, targetUserId },
       "removeAdmin service called"
     );
 
@@ -239,21 +242,24 @@ export const CommunityService = {
       throw new ApiError(404, "Community not found");
     }
 
-    // Only owner can remove admins
-    if (String((community.owner as any)._id) !== ownerId) {
-      throw new ApiError(403, "Only owner can remove admins");
+    // Only admins can remove other admins
+    const isRequesterAdmin = community.admins.some(
+      (admin: any) => String(admin._id) === requesterId
+    );
+    if (!isRequesterAdmin) {
+      throw new ApiError(403, "Only admins can remove other admins");
     }
 
-    // Cannot remove owner from admins
-    if (String((community.owner as any)._id) === targetUserId) {
-      throw new ApiError(400, "Cannot remove owner from admins");
+    // Cannot remove yourself if you're the last admin
+    if (requesterId === targetUserId && community.admins.length === 1) {
+      throw new ApiError(400, "Cannot remove the last admin from the community");
     }
 
-    // Check if user is an admin
-    const isAdmin = community.admins.some(
+    // Check if target user is an admin
+    const isTargetAdmin = community.admins.some(
       (admin: any) => String(admin._id) === targetUserId
     );
-    if (!isAdmin) {
+    if (!isTargetAdmin) {
       throw new ApiError(400, "User is not an admin");
     }
 
