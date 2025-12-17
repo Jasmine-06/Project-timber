@@ -56,12 +56,20 @@ export default function CommunityPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Community Avatar */}
-              <Avatar className="h-16 w-16 border">
-                <AvatarImage src={community.avatar || undefined} />
-                <AvatarFallback className="bg-muted text-foreground text-2xl">
-                  {community.name?.charAt(0).toUpperCase() || "#"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                {community.avatar ? (
+                  <Avatar className="h-16 w-16 rounded-lg">
+                    <AvatarImage src={community.avatar} />
+                    <AvatarFallback className="bg-transparent text-white text-2xl rounded-lg">
+                      {community.name?.charAt(0).toUpperCase() || "#"}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <span className="text-3xl text-white font-bold">
+                    {community.name?.charAt(0).toUpperCase() || "#"}
+                  </span>
+                )}
+              </div>
 
               {/* Community Info */}
               <div>
@@ -71,11 +79,13 @@ export default function CommunityPage() {
             </div>
 
             {/* Action Buttons */}
-            <ParticleButton variant="outline" size="default" className="bg-primary text-primary-foreground rounded-full">
+            <ParticleButton 
+              variant="outline" 
+              size="default" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
+            >
               Join
             </ParticleButton>
-
-
           </div>
         </div>
       </div>

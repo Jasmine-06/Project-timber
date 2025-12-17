@@ -115,7 +115,7 @@ export const CommunityActions = {
         if (before) {
             url += `&before=${before}`;
         }
-        const response = await axiosInstance.get<ApiResponse<any[]>>(url);
-        return response.data.data!;
+        const response = await axiosInstance.get<ApiResponse<{ data: any[] }>>(url);
+        return response.data.data!.data;
     },
 };
