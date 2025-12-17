@@ -11,34 +11,34 @@ const popularCommunities = [
 
 export default function RightSidebar() {
   return (
-    <div className="hidden xl:block w-[220px] shrink-0 sticky top-32 mt-8">
+    <div className="hidden xl:block w-[300px] shrink-0 sticky top-32 mt-8">
       <div>
         {/* Popular Communities */}
         <div>
-          <h3 className="text-xs font-bold text-muted-foreground mb-4 tracking-wide">
+          <h3 className="text-sm font-bold text-muted-foreground mb-4 tracking-wide">
             POPULAR COMMUNITIES
           </h3>
           <div className="space-y-1">
             {popularCommunities.map((community, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2.5 py-1.5 px-1 rounded-md hover:bg-muted/20 transition-all duration-200 cursor-pointer group"
+                className="flex items-center gap-3 py-3 px-2 rounded-md hover:bg-muted/20 transition-all duration-200 cursor-pointer group"
               >
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
                   {community.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                  <p className="text-lg font-medium text-foreground truncate group-hover:text-primary transition-colors">
                     {community.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {community.members} members
                   </p>
                 </div>
               </div>
             ))}
           </div>
-          <button className="text-xs text-primary hover:text-primary/80 mt-3 px-1 font-medium">
+          <button className="text-sm text-primary hover:text-primary/80 mt-3 px-2 font-medium">
             See more
           </button>
         </div>
