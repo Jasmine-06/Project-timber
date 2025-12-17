@@ -312,3 +312,30 @@ export const GetUserCommunitiesController = asyncHandler(
       );
   }
 );
+
+export const GetCommunityMessagesController = asyncHandler(
+    async (req: Request, res: Response) => {
+        logger.debug({ params: req.params, query: req.query }, "GetCommunityMessagesController request");
+        const { communityId } = req.params;
+        const { limit, before } = req.query;
+
+        if (!req.user?._id) {
+            throw new ApiError(401, "Authentication failed");
+        }
+
+        if (!communityId) {
+            throw new ApiError(400, "Community ID is required");
+        }
+
+        // Validate query params if needed, or cast them
+        const limitNum = limit ? parseInt(limit as string) : 50;
+        
+        const messages = await CommunityService.getCommunityMessages(
+            communityId,
+            limitNum,
+            before as string
+        );
+
+        res.status(200).json(new ApiResponse({ data: messages, message: "Messages retrieved successfully" }));
+    }
+);

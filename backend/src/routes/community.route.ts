@@ -11,6 +11,7 @@ import {
   AddAdminController,
   RemoveAdminController,
   GetUserCommunitiesController,
+  GetCommunityMessagesController,
 } from "../controllers/community.controller";
 
 const communityRouter = Router();
@@ -22,6 +23,7 @@ communityRouter.get("/my/communities", AuthMiddleware, GetUserCommunitiesControl
 // Public routes
 communityRouter.get("/", GetAllCommunitiesController);
 communityRouter.get("/:communityId", GetCommunityByIdController);
+communityRouter.get("/:communityId/messages", AuthMiddleware, GetCommunityMessagesController);
 
 // Protected routes with params
 communityRouter.patch("/:communityId", AuthMiddleware, UpdateCommunityController);

@@ -2,6 +2,7 @@ import { CommunityRepository } from "../repositories/community.repository";
 import { ApiError } from "../advices/ApiError";
 import logger from "../utils/logger";
 import { UserRepository } from "../repositories/user.repository";
+import { MessageRepository } from "../repositories/message.repository";
 
 export const CommunityService = {
   createCommunity: async (data: {
@@ -272,5 +273,33 @@ export const CommunityService = {
     );
 
     return { communities };
+  },
+
+  getCommunityMessages: async (
+    communityId: string,
+    limit: number = 50,
+    before?: string
+  ) => {
+    logger.debug(
+      { communityId, limit, before },
+      "getCommunityMessages service called"
+    );
+
+    const community = await CommunityRepository.findCommunityById(communityId);
+    if (!community) {
+      throw new ApiError(404, "Community not found");
+    }
+
+    const messages = await MessageRepository.findMessagesByCommunity(
+      communityId,
+      limit,
+      before
+    );
+
+    // Because MessageRepository now returns profile_picture, we might need to verify if frontend 
+    // expects 'avatar' or 'profile_picture'. Ideally frontend matches backend. 
+    // We will return as is.
+
+    return messages;
   },
 };

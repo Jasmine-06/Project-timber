@@ -21,8 +21,8 @@ export const CommunityRepository = {
 
     // Populate admins and members with user details
     const populatedCommunity = await Community.findById(savedCommunity._id, COMMUNITY_PROJECTION)
-      .populate("admins", "name username image")
-      .populate("members", "name username image")
+      .populate("admins", "name username profile_picture")
+      .populate("members", "name username profile_picture")
       .lean();
 
     // Remove __v field manually
@@ -38,8 +38,8 @@ export const CommunityRepository = {
     projection: any = COMMUNITY_PROJECTION
   ) => {
     return await Community.findById(id, projection)
-      .populate("admins", "name username image")
-      .populate("members", "name username image");
+      .populate("admins", "name username profile_picture")
+      .populate("members", "name username profile_picture");
   },
 
   findCommunityByName: async (name: string) => {
@@ -56,7 +56,7 @@ export const CommunityRepository = {
       .skip(skip)
       .limit(limit)
       .select(COMMUNITY_PROJECTION)
-      .populate("admins", "name username image");
+      .populate("admins", "name username profile_picture");
   },
 
   countAllCommunities: async (search: string = "") => {
@@ -110,13 +110,13 @@ export const CommunityRepository = {
   findCommunitiesByMember: async (userId: string) => {
     return await Community.find({ members: userId })
       .select(COMMUNITY_PROJECTION)
-      .populate("admins", "name username image");
+      .populate("admins", "name username profile_picture");
   },
 
   findCommunitiesByOwner: async (userId: string) => {
     return await Community.find({ owner: userId })
       .select(COMMUNITY_PROJECTION)
-      .populate("admins", "name username image");
+      .populate("admins", "name username profile_picture");
   },
 
   isMember: async (communityId: string, userId: string): Promise<boolean> => {

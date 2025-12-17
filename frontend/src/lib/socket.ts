@@ -66,6 +66,7 @@ class SocketService {
 
         this.socket.on("error", (error: SocketError) => {
             console.error("❌ Socket error:", error);
+            console.log("Socket error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
         });
 
         this.socket.on("disconnect", (reason: string) => {

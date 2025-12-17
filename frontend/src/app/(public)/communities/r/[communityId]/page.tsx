@@ -1,44 +1,77 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ParticleButton from "@/components/kokonutui/particle-button";
-import { Bell, MoreHorizontal } from "lucide-react";
 import { useParams } from "next/navigation";
-
-// Mock data - replace with actual API call
-const communityData: Record<string, { name: string; icon: string; description: string; members: string }> = {
-  "1": { name: "r/funny", icon: "😄", description: "Reddit's largest humor depository", members: "67M" },
-  "2": { name: "r/AskReddit", icon: "❓", description: "r/AskReddit is the place to ask...", members: "57M" },
-  "3": { name: "r/gaming", icon: "🎮", description: "The Number One Gaming forum...", members: "47M" },
-};
+import { CommunityActions } from "@/api-actions/community-actions";
+import { ChatArea } from "@/components/chat/chat-area";
+import { Loader2 } from "lucide-react";
 
 export default function CommunityPage() {
   const params = useParams();
   const communityId = params.communityId as string;
-  const community = communityData[communityId] || { name: "r/community", icon: "🌟", description: "Community", members: "0" };
+  const [community, setCommunity] = useState<ICommunity | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCommunity() {
+      try {
+        setLoading(true);
+        const data = await CommunityActions.GetCommunityByIdAction(communityId);
+        setCommunity(data);
+      } catch (error) {
+        console.error("Failed to fetch community:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (communityId) {
+      fetchCommunity();
+    }
+  }, [communityId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!community) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Community not found</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background flex flex-col">
       {/* Community Header */}
-      <div className="bg-card border-b border-border">
+      <div className="bg-card border-b border-border shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Community Avatar */}
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-muted text-foreground text-2xl border border-border">
-                  {community.icon}
+              <Avatar className="h-16 w-16 border">
+                <AvatarImage src={community.avatar || undefined} />
+                <AvatarFallback className="bg-muted text-foreground text-2xl">
+                  {community.name?.charAt(0).toUpperCase() || "#"}
                 </AvatarFallback>
               </Avatar>
 
               {/* Community Info */}
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{community.name}</h1>
+                <p className="text-sm text-muted-foreground">{community.description}</p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <ParticleButton variant="outline" size="default" className="bg-black text-white rounded-full">
+            <ParticleButton variant="outline" size="default" className="bg-primary text-primary-foreground rounded-full">
               Join
             </ParticleButton>
 
@@ -48,10 +81,9 @@ export default function CommunityPage() {
       </div>
 
       {/* Community Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="text-center text-muted-foreground py-12">
-          <p>Community content will be displayed here</p>
-          <p className="text-sm mt-2">{community.members} members</p>
+      <div className="flex-1 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 py-6 h-full flex flex-col">
+          <ChatArea community={community} />
         </div>
       </div>
     </div>

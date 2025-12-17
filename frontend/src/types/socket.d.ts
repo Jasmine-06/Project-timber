@@ -8,7 +8,7 @@ export interface MessageData {
         _id: string;
         username: string;
         name: string;
-        image?: string;
+        profile_picture?: string;
     };
     community: string;
     communityId?: string;

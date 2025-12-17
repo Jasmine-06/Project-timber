@@ -104,4 +104,18 @@ export const CommunityActions = {
         );
         return response.data.data!;
     },
+
+    // Get community messages (protected)
+    GetCommunityMessagesAction: async (
+        communityId: string,
+        limit: number = 50,
+        before?: string
+    ): Promise<any[]> => {
+        let url = `/community/${communityId}/messages?limit=${limit}`;
+        if (before) {
+            url += `&before=${before}`;
+        }
+        const response = await axiosInstance.get<ApiResponse<any[]>>(url);
+        return response.data.data!;
+    },
 };

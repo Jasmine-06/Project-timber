@@ -105,7 +105,10 @@ export const setupSocketHandlers = async (io: Server) => {
         console.log(`User ${user.username} authenticated`);
       } catch (error) {
         console.error("Authentication error:", error);
-        socket.emit("error", { message: "Authentication failed" });
+        socket.emit("error", { 
+          message: "Authentication failed", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
       }
     });
 
@@ -144,14 +147,25 @@ export const setupSocketHandlers = async (io: Server) => {
           });
       } catch (error) {
         console.error("Join community error:", error);
-        socket.emit("error", { message: "Failed to join community" });
+        socket.emit("error", { 
+          message: "Failed to join community", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
       }
     });
 
     // Handle leaving a community room
     socket.on("leave-community", (data: { communityId: string }) => {
-      socket.leave(`community:${data.communityId}`);
-      socket.emit("left-community", { communityId: data.communityId });
+      try {
+        socket.leave(`community:${data.communityId}`);
+        socket.emit("left-community", { communityId: data.communityId });
+      } catch (error) {
+        console.error("Leave community error:", error);
+        socket.emit("error", { 
+          message: "Failed to leave community", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
+      }
     });
 
     // Handle sending messages
@@ -200,7 +214,7 @@ export const setupSocketHandlers = async (io: Server) => {
         await message.save();
 
         // Populate sender info
-        await message.populate("sender", "username avatar");
+        await message.populate("sender", "username profile_picture");
 
         const messageData = {
           _id: message._id,
@@ -222,20 +236,32 @@ export const setupSocketHandlers = async (io: Server) => {
         socket.emit("message-sent", messageData);
       } catch (error) {
         console.error("Send message error:", error);
-        socket.emit("error", { message: "Failed to send message" });
+        socket.emit("error", { 
+          message: "Failed to send message", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
       }
     });
 
     // Handle typing indicator
     socket.on("typing", async (data: TypingPayload) => {
-      if (!socket.userId) return;
+      try {
+        if (!socket.userId) return;
 
-      await publishMessage(REDIS_CHANNELS.USER_TYPING, {
-        userId: socket.userId,
-        username: socket.username || "",
-        communityId: data.communityId,
-        isTyping: data.isTyping,
-      });
+        await publishMessage(REDIS_CHANNELS.USER_TYPING, {
+          userId: socket.userId,
+          username: socket.username || "",
+          communityId: data.communityId,
+          isTyping: data.isTyping,
+        });
+      } catch (error) {
+        console.error("Typing indicator error:", error);
+        // Usually we don't want to spam errors for typing, but for debugging:
+        socket.emit("error", { 
+          message: "Failed to send typing indicator", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
+      }
     });
 
     // Handle message deletion
@@ -276,7 +302,10 @@ export const setupSocketHandlers = async (io: Server) => {
         });
       } catch (error) {
         console.error("Delete message error:", error);
-        socket.emit("error", { message: "Failed to delete message" });
+        socket.emit("error", { 
+          message: "Failed to delete message", 
+          details: error instanceof Error ? error.message : "Unknown error" 
+        });
       }
     });
 
@@ -315,7 +344,10 @@ export const setupSocketHandlers = async (io: Server) => {
           });
         } catch (error) {
           console.error("Edit message error:", error);
-          socket.emit("error", { message: "Failed to edit message" });
+          socket.emit("error", { 
+            message: "Failed to edit message", 
+            details: error instanceof Error ? error.message : "Unknown error" 
+          });
         }
       }
     );

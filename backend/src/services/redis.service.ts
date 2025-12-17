@@ -1,13 +1,24 @@
 import Redis from "ioredis";
 import type { IMessage } from "../models/message.model";
 
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const redisConfig = process.env.REDIS_HOST
+  ? {
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT) || 6379,
+      password: process.env.REDIS_PASSWORD,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false, // This might need to be true for some providers, but keeping as was in original
+    }
+  : process.env.REDIS_URL || "redis://localhost:6379";
 
 // Create Redis clients for Pub/Sub
-export const pubClient = new Redis(REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-});
+export const pubClient =
+  typeof redisConfig === "string"
+    ? new Redis(redisConfig, {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+      })
+    : new Redis(redisConfig);
 
 export const subClient = pubClient.duplicate();
 

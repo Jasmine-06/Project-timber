@@ -21,7 +21,7 @@ export const MessageRepository = {
 
         // Populate sender with user details
         const populatedMessage = await Message.findById(savedMessage._id, MESSAGE_PROJECTION)
-            .populate("sender", "name username image")
+            .populate("sender", "name username profile_picture")
             .populate("replyTo", "content sender")
             .lean();
 
@@ -35,7 +35,7 @@ export const MessageRepository = {
 
     findMessageById: async (id: string, projection: any = MESSAGE_PROJECTION) => {
         return await Message.findById(id, projection)
-            .populate("sender", "name username image")
+            .populate("sender", "name username profile_picture")
             .populate("replyTo", "content sender");
     },
 
@@ -54,7 +54,7 @@ export const MessageRepository = {
             .sort({ createdAt: -1 })
             .limit(limit)
             .select(MESSAGE_PROJECTION)
-            .populate("sender", "name username image")
+            .populate("sender", "name username profile_picture")
             .populate("replyTo", "content sender")
             .lean();
     },
@@ -64,7 +64,7 @@ export const MessageRepository = {
             new: true,
             projection: MESSAGE_PROJECTION,
         })
-            .populate("sender", "name username image")
+            .populate("sender", "name username profile_picture")
             .populate("replyTo", "content sender");
     },
 
