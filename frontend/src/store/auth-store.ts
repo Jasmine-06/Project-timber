@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { setCookie, getCookie } from "cookies-next/client";
+import { setCookie, getCookie, deleteCookie } from "cookies-next/client";
 
 
 interface AuthStore {
@@ -29,7 +29,8 @@ const useAuthStore = create<AuthStore>() (
                 }))
             },
             setLogout: () => {
-                setCookie("auth_token", '');
+                // Properly delete the cookie instead of setting it to empty string
+                deleteCookie("auth_token");
                 set(() => ({
                     isAuthenticated: false,
                     user: null,

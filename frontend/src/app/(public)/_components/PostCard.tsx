@@ -58,73 +58,70 @@ export function PostCard({
   return (
     <article className="w-full bg-card border-b border-border">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5">
-        <div className="flex items-center gap-2.5">
-          <Avatar className="h-8 w-8">
+      <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-11 w-11">
             <AvatarImage src={userAvatar} />
-            <AvatarFallback className="bg-primary/20 text-primary text-xs">
+            <AvatarFallback className="bg-primary/20 text-primary text-sm">
               {username[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold hover:opacity-70 cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-semibold hover:opacity-70 cursor-pointer">
               {username}
             </span>
-            <span className="text-muted-foreground text-xs">•</span>
-            <span className="text-muted-foreground text-xs">{timeAgo}</span>
+            <span className="text-muted-foreground text-sm">•</span>
+            <span className="text-muted-foreground text-sm">{timeAgo}</span>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted">
-          <MoreHorizontal className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-muted">
+          <MoreHorizontal className="h-6 w-6" />
         </Button>
       </div>
 
       {/* Image */}
       {images.length > 0 && (
-        <div className="w-full bg-muted/20 max-h-[600px] overflow-hidden flex items-center justify-center">
-          <img 
-            src={images[0]} 
+        <div className="w-full aspect-[10/9] overflow-hidden bg-black dark:bg-black">
+          <img
+            src={images[0]}
             alt={`Post by ${username}`}
-            className="w-[90%] h-full max-h-[600px] object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
       )}
 
       {/* Actions */}
-      <div className="px-3 py-2">
-        <div className="flex items-center justify-between mb-2">
+      <div className="px-4 py-2">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-12 w-12 hover:bg-transparent p-0"
+            <Button
+              variant="ghost"
+              className="!h-12 !w-12 hover:bg-transparent p-0"
               onClick={handleLike}
             >
-              <Heart 
-                className={`h-[28px] w-[28px] transition-colors ${
-                  isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
-                }`}
+              <Heart
+                className={`!w-7 !h-7 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
+                  }`}
+                strokeWidth={1.3}
               />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-12 w-12 hover:bg-transparent p-0"
+            <Button
+              variant="ghost"
+              className="!h-12 !w-12 hover:bg-transparent p-0"
               onClick={onComment}
             >
-              <MessageCircle className="h-[28px] w-[28px]" />
+              <MessageCircle className="!w-7 !h-7" strokeWidth={1.3} />
             </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-12 w-12 hover:bg-transparent p-0"
+          <Button
+            variant="ghost"
+            className="!h-12 !w-12 hover:bg-transparent p-0"
             onClick={handleBookmark}
           >
-            <Bookmark 
-              className={`h-[28px] w-[28px] transition-colors ${
-                isBookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
-              }`}
+            <Bookmark
+              className={`!w-7 !h-7 transition-colors ${isBookmarked ? 'fill-foreground text-foreground' : 'text-foreground'
+                }`}
+              strokeWidth={1.3}
             />
           </Button>
         </div>
@@ -136,23 +133,17 @@ export function PostCard({
 
         {/* Caption */}
         {caption && (
-          <div className="text-sm mb-1">
+          <div className="text-base mb-1">
             <span className="font-semibold mr-1.5">{username}</span>
             <span className="whitespace-pre-wrap">{caption}</span>
           </div>
         )}
 
-        {/* User's Comment */}
-        {userComment && (
-          <div className="text-sm mb-1.5 bg-muted/30 rounded-md px-2 py-1.5">
-            <span className="font-semibold mr-1.5 text-primary">You</span>
-            <span className="whitespace-pre-wrap">{userComment.content}</span>
-          </div>
-        )}
+
 
         {/* Comments Count */}
         {commentsCount > 0 && (
-          <button 
+          <button
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             onClick={onComment}
           >

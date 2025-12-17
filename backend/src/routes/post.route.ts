@@ -29,7 +29,7 @@ postRouter.get("/user/:username", GetPostsByUsernameController);
 postRouter.get("/bookmarks", AuthMiddleware, GetBookmarkedPostsController);
 
 postRouter.get("/:postId/comments", GetCommentsController);
-postRouter.get("/:postId", GetPostByIdController);
+postRouter.get("/:postId", OptionalAuthMiddleware, GetPostByIdController);
 
 // Protected routes
 postRouter.use(AuthMiddleware);

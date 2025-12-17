@@ -31,27 +31,27 @@ export const PostActions = {
 
   // Get post by ID (public)
   GetPostByIdAction: async (postId: string): Promise<IPost> => {
-    const response = await axiosInstance.get<ApiResponse<IPost>>(
+    const response = await axiosInstance.get<ApiResponse<{ post: IPost }>>(
       `/post/${postId}`
     );
-    return response.data.data!;
+    return response.data.data!.post;
   },
 
   // Get post comments (public)
   GetPostCommentsAction: async (postId: string): Promise<IComment[]> => {
-    const response = await axiosInstance.get<ApiResponse<IComment[]>>(
+    const response = await axiosInstance.get<ApiResponse<{ comments: IComment[] }>>(
       `/post/${postId}/comments`
     );
-    return response.data.data!;
+    return response.data.data!.comments;
   },
 
   // Create a new post (protected)
   CreatePostAction: async (data: ICreatePostSchema): Promise<IPost> => {
-    const response = await axiosInstance.post<ApiResponse<IPost>>(
+    const response = await axiosInstance.post<ApiResponse<{ post: IPost }>>(
       "/post",
       data
     );
-    return response.data.data!;
+    return response.data.data!.post;
   },
 
   // Update a post (protected)
@@ -59,11 +59,11 @@ export const PostActions = {
     postId: string,
     data: IUpdatePostSchema
   ): Promise<IPost> => {
-    const response = await axiosInstance.patch<ApiResponse<IPost>>(
+    const response = await axiosInstance.patch<ApiResponse<{ post: IPost }>>(
       `/post/${postId}`,
       data
     );
-    return response.data.data!;
+    return response.data.data!.post;
   },
 
   // Delete a post (protected)
@@ -78,11 +78,11 @@ export const PostActions = {
   CreateCommentAction: async (
     data: ICreateCommentSchema
   ): Promise<IComment> => {
-    const response = await axiosInstance.post<ApiResponse<IComment>>(
+    const response = await axiosInstance.post<ApiResponse<{ comment: IComment }>>(
       "/post/comments",
       data
     );
-    return response.data.data!;
+    return response.data.data!.comment;
   },
 
   // Update a comment (protected)
@@ -90,11 +90,11 @@ export const PostActions = {
     commentId: string,
     data: IUpdateCommentSchema
   ): Promise<IComment> => {
-    const response = await axiosInstance.patch<ApiResponse<IComment>>(
+    const response = await axiosInstance.patch<ApiResponse<{ comment: IComment }>>(
       `/post/comments/${commentId}`,
       data
     );
-    return response.data.data!;
+    return response.data.data!.comment;
   },
 
   // Delete a comment (protected)

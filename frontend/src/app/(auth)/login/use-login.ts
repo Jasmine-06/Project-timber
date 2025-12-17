@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AuthActions } from '@/api-actions/auth-action';
@@ -12,20 +12,28 @@ import { AxiosError } from 'axios';
  */
 export const useLogin = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const setLogin = useAuthStore((state) => state.setLogin);
 
   return useMutation({
     mutationFn: (data: ILoginSchema) => AuthActions.LoginAction(data),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Store auth data in Zustand store and cookies
       setLogin(data);
+      
+      // Refetch posts queries with authenticated user's data
+      // Use refetchQueries instead of invalidateQueries to ensure data is loaded before navigation
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['posts'] }),
+        queryClient.refetchQueries({ queryKey: ['bookmarkedPosts'] })
+      ]);
       
       // Show success message
       toast.success('Login successful!', {
         description: `Welcome back, ${data.user.name}!`,
       });
 
-      // Navigate to homepage
+      // Navigate to homepage after queries are refetched
       router.push('/');
     },
     onError: (error: AxiosError<ApiResponse<null>>) => {

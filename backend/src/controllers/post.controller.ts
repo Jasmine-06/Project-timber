@@ -95,7 +95,8 @@ export const GetPostByIdController = asyncHandler(
       throw new ApiError(400, "Post ID is required");
     }
 
-    const post = await PostService.getPostById(postId);
+    const userId = req.user?._id ? String(req.user._id) : undefined;
+    const post = await PostService.getPostById(postId, userId);
 
     res.status(200).json(
       new ApiResponse({

@@ -8,22 +8,32 @@ import {
   JoinCommunityController,
   LeaveCommunityController,
   DeleteCommunityController,
+  AddAdminController,
+  RemoveAdminController,
+  GetUserCommunitiesController,
+  GetCommunityMessagesController,
 } from "../controllers/community.controller";
 
 const communityRouter = Router();
 
-// Public routes (if any, e.g., viewing communities)
+// Protected routes (must come before public routes to avoid conflicts)
+communityRouter.post("/", AuthMiddleware, CreateCommunityController);
+communityRouter.get("/my/communities", AuthMiddleware, GetUserCommunitiesController);
+
+// Public routes
 communityRouter.get("/", GetAllCommunitiesController);
 communityRouter.get("/:communityId", GetCommunityByIdController);
+communityRouter.get("/:communityId/messages", AuthMiddleware, GetCommunityMessagesController);
 
-// Protected routes
-communityRouter.use(AuthMiddleware);
+// Protected routes with params
+communityRouter.patch("/:communityId", AuthMiddleware, UpdateCommunityController);
+communityRouter.delete("/:communityId", AuthMiddleware, DeleteCommunityController);
 
-communityRouter.post("/", CreateCommunityController);
-communityRouter.patch("/:communityId", UpdateCommunityController);
-communityRouter.delete("/:communityId", DeleteCommunityController);
+communityRouter.post("/:communityId/join", AuthMiddleware, JoinCommunityController);
+communityRouter.post("/:communityId/leave", AuthMiddleware, LeaveCommunityController);
 
-communityRouter.post("/:communityId/join", JoinCommunityController);
-communityRouter.post("/:communityId/leave", LeaveCommunityController);
+// Admin management routes
+communityRouter.post("/:communityId/admins", AuthMiddleware, AddAdminController);
+communityRouter.delete("/:communityId/admins/:userId", AuthMiddleware, RemoveAdminController);
 
 export default communityRouter;

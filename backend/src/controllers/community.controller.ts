@@ -4,27 +4,13 @@ import { CommunityService } from "../services/community.service";
 import { ApiResponse } from "../advices/ApiResponse";
 import { ApiError } from "../advices/ApiError";
 import logger from "../utils/logger";
-import { z } from "zod";
 import { zodErrorFormatter } from "../utils/error.formatter";
-
-// Schemas
-const CreateCommunitySchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  bio: z.string().max(500, "Bio cannot exceed 500 characters").optional(),
-  image: z.string().url("Invalid image URL").optional(),
-});
-
-const UpdateCommunitySchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters").optional(),
-  bio: z.string().max(500, "Bio cannot exceed 500 characters").optional(),
-  image: z.string().url("Invalid image URL").optional(),
-});
-
-const GetCommunityQuerySchema = z.object({
-  page: z.string().default("1").transform(Number),
-  limit: z.string().default("10").transform(Number),
-  search: z.string().default(""),
-});
+import {
+  AddAdminSchema,
+  createCommunitySchema,
+  GetCommunityQuerySchema,
+  updateCommunitySchema,
+} from "../schema/community.schema";
 
 export const CreateCommunityController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -34,7 +20,7 @@ export const CreateCommunityController = asyncHandler(
       throw new ApiError(401, "Authentication failed");
     }
 
-    const result = CreateCommunitySchema.safeParse(req.body);
+    const result = createCommunitySchema.safeParse(req.body);
     if (!result.success) {
       throw new ApiError(
         400,
@@ -45,7 +31,7 @@ export const CreateCommunityController = asyncHandler(
 
     const community = await CommunityService.createCommunity({
       ...result.data,
-      admin_id: req.user._id,
+      owner: req.user._id,
     });
 
     logger.info(
@@ -129,7 +115,7 @@ export const UpdateCommunityController = asyncHandler(
       throw new ApiError(400, "Community ID is required");
     }
 
-    const result = UpdateCommunitySchema.safeParse(req.body);
+    const result = updateCommunitySchema.safeParse(req.body);
     if (!result.success) {
       throw new ApiError(
         400,
@@ -233,4 +219,123 @@ export const DeleteCommunityController = asyncHandler(
 
     res.status(200).json(new ApiResponse(result));
   }
+);
+
+export const AddAdminController = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.debug(
+      { params: req.params, body: req.body },
+      "AddAdminController request"
+    );
+    const { communityId } = req.params;
+
+    if (!req.user?._id) {
+      throw new ApiError(401, "Authentication failed");
+    }
+
+    if (!communityId) {
+      throw new ApiError(400, "Community ID is required");
+    }
+
+    const result = AddAdminSchema.safeParse(req.body);
+    if (!result.success) {
+      throw new ApiError(
+        400,
+        "Validation Error",
+        zodErrorFormatter(result.error)
+      );
+    }
+
+    const response = await CommunityService.addAdmin(
+      communityId,
+      req.user._id,
+      result.data.userId
+    );
+
+    logger.info(
+      { communityId, targetUserId: result.data.userId },
+      "Admin added successfully"
+    );
+
+    res.status(200).json(new ApiResponse(response));
+  }
+);
+
+export const RemoveAdminController = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.debug({ params: req.params }, "RemoveAdminController request");
+    const { communityId, userId } = req.params;
+
+    if (!req.user?._id) {
+      throw new ApiError(401, "Authentication failed");
+    }
+
+    if (!communityId || !userId) {
+      throw new ApiError(400, "Community ID and User ID are required");
+    }
+
+    const response = await CommunityService.removeAdmin(
+      communityId,
+      req.user._id,
+      userId
+    );
+
+    logger.info(
+      { communityId, targetUserId: userId },
+      "Admin removed successfully"
+    );
+
+    res.status(200).json(new ApiResponse(response));
+  }
+);
+
+export const GetUserCommunitiesController = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.debug(
+      { user: req.user },
+      "GetUserCommunitiesController request"
+    );
+
+    if (!req.user?._id) {
+      throw new ApiError(401, "Authentication failed");
+    }
+
+    const data = await CommunityService.getCommunitiesByUser(req.user._id);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse({
+          ...data,
+          message: "User communities retrieved successfully",
+        })
+      );
+  }
+);
+
+export const GetCommunityMessagesController = asyncHandler(
+    async (req: Request, res: Response) => {
+        logger.debug({ params: req.params, query: req.query }, "GetCommunityMessagesController request");
+        const { communityId } = req.params;
+        const { limit, before } = req.query;
+
+        if (!req.user?._id) {
+            throw new ApiError(401, "Authentication failed");
+        }
+
+        if (!communityId) {
+            throw new ApiError(400, "Community ID is required");
+        }
+
+        // Validate query params if needed, or cast them
+        const limitNum = limit ? parseInt(limit as string) : 50;
+        
+        const messages = await CommunityService.getCommunityMessages(
+            communityId,
+            limitNum,
+            before as string
+        );
+
+        res.status(200).json(new ApiResponse({ data: messages, message: "Messages retrieved successfully" }));
+    }
 );

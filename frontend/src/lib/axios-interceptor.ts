@@ -33,7 +33,15 @@ axiosInstance.interceptors.response.use(
     async(response : AxiosResponse) => response,
     async (error: AxiosError<ApiResponse<null>>) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        
+        // Don't attempt refresh if:
+        // 1. The request is already a retry
+        // 2. The request is to the logout endpoint
+        // 3. The request is to the refresh-token endpoint itself
+        const isLogoutRequest = originalRequest.url?.includes('/auth/logout');
+        const isRefreshRequest = originalRequest.url?.includes('/auth/refresh-token');
+        
+        if (error.response?.status === 401 && !originalRequest._retry && !isLogoutRequest && !isRefreshRequest) {
             originalRequest._retry = true;
             try {
                 const response = await axios.post<ApiResponse<ILoginResponse>>(`${BACKEND_URL}/auth/refresh-token`,{} , {
@@ -46,14 +54,16 @@ axiosInstance.interceptors.response.use(
                     useAuthStore.getState().setLogin(response.data.data);
                     return axiosInstance(originalRequest);
                 }
-            } catch (error) {
-               await AuthActions.LogoutAction();
+            } catch (refreshError) {
+                // Only logout if refresh token is invalid
+                await AuthActions.LogoutAction();
                 useAuthStore.getState().setLogout();
-                return Promise.reject(error);
+                return Promise.reject(refreshError);
             }
-
         }
-        useAuthStore.getState().setLogout()
+        
+        // Don't automatically logout on all 401 errors
+        // Let the calling code handle the error appropriately
         return Promise.reject(error);
     }
 );

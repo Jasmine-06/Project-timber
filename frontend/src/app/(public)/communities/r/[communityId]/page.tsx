@@ -1,59 +1,79 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import ParticleButton from "@/components/kokonutui/particle-button";
-import { Bell, MoreHorizontal } from "lucide-react";
-import { useParams } from "next/navigation";
-
-// Mock data - replace with actual API call
-const communityData: Record<string, { name: string; icon: string; description: string; members: string }> = {
-  "1": { name: "r/funny", icon: "😄", description: "Reddit's largest humor depository", members: "67M" },
-  "2": { name: "r/AskReddit", icon: "❓", description: "r/AskReddit is the place to ask...", members: "57M" },
-  "3": { name: "r/gaming", icon: "🎮", description: "The Number One Gaming forum...", members: "47M" },
-};
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth-store";
+import { useChatStore } from "@/store/chat-store";
+import { socketService } from "@/lib/socket";
+import { CommunityActions } from "@/api-actions/community-actions";
+import { ChatArea } from "@/components/chat/chat-area";
+import { CommunityMembers } from "@/components/chat/community-members";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CommunityPage() {
   const params = useParams();
+  const router = useRouter();
   const communityId = params.communityId as string;
-  const community = communityData[communityId] || { name: "r/community", icon: "🌟", description: "Community", members: "0" };
+  const { isAuthenticated, isLoading: authLoading, user } = useAuthStore();
+  const { activeCommunity, setActiveCommunity } = useChatStore();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (!socketService.isConnected()) {
+        socketService.connect(user._id);
+      }
+    }
+
+    return () => {
+      if (socketService.isConnected()) {
+        socketService.disconnect();
+      }
+    };
+  }, [isAuthenticated, user]);
+
+  // Fetch and set active community
+  useEffect(() => {
+    async function fetchCommunity() {
+      try {
+        const data = await CommunityActions.GetCommunityByIdAction(communityId);
+        setActiveCommunity(data);
+      } catch (error) {
+        console.error("Failed to fetch community:", error);
+        toast.error("Failed to load community");
+        router.push("/communities");
+      }
+    }
+
+    if (communityId && isAuthenticated) {
+      fetchCommunity();
+    }
+  }, [communityId, isAuthenticated, setActiveCommunity, router]);
+
+  if (authLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Community Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Community Avatar */}
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-muted text-foreground text-2xl border border-border">
-                  {community.icon}
-                </AvatarFallback>
-              </Avatar>
-
-              {/* Community Info */}
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{community.name}</h1>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <ParticleButton variant="outline" size="default" className="bg-black text-white rounded-full">
-              Join
-            </ParticleButton>
-
-
-          </div>
-        </div>
-      </div>
-
-      {/* Community Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="text-center text-muted-foreground py-12">
-          <p>Community content will be displayed here</p>
-          <p className="text-sm mt-2">{community.members} members</p>
-        </div>
-      </div>
+    <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-background">
+      <ChatArea />
+      {activeCommunity && <CommunityMembers community={activeCommunity} />}
     </div>
   );
 }

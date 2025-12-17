@@ -141,13 +141,52 @@ export const PostService = {
     };
   },
 
-  getPostById: async (postId: string) => {
-    logger.debug({ postId }, "getPostById service called");
-    const post = await PostRepository.findPostById(postId);
+  getPostById: async (postId: string, userId?: string) => {
+    logger.debug({ postId, userId }, "getPostById service called");
+    const post: any = await PostRepository.findPostById(postId);
     if (!post) {
       throw new ApiError(404, "Post not found");
     }
-    return post;
+
+    // Get counts
+    const [likesCount, commentsCount] = await Promise.all([
+      PostRepository.countLikes(postId),
+      // We can use the batch method or just count for one.
+      // Repository doesn't have a single countComments method exposed directly in the interface shown,
+      // but it does have countCommentsForPosts which returns a map.
+      // Let's use countCommentsForPosts for consistency or add a single one.
+      // Actually, checking repository again... it has countLikes(postId).
+      // It DOES NOT have countComments(postId) explicitly exposed in the previous file view?
+      // Wait, let me re-check the repository file view from history./
+      // It has `findCommentsByPostId` but not `countComments`.
+      // It has `countCommentsForPosts` (batch).
+      // I'll use countCommentsForPosts with single ID.
+      PostRepository.countCommentsForPosts([postId]),
+    ]);
+
+    let isLiked = false;
+    let isBookmarked = false;
+    let userComment = null;
+
+    if (userId) {
+      const [like, bookmark, userCommentsMap] = await Promise.all([
+        PostRepository.findLike(postId, userId),
+        PostRepository.findBookmark(postId, userId),
+        PostRepository.findUserCommentsForPosts([postId], userId),
+      ]);
+      isLiked = !!like;
+      isBookmarked = !!bookmark;
+      userComment = userCommentsMap[postId] || null;
+    }
+
+    return {
+      ...post,
+      likes: likesCount,
+      comments: commentsCount[postId] || 0,
+      isLiked,
+      isBookmarked,
+      userComment,
+    };
   },
 
   updatePost: async (
