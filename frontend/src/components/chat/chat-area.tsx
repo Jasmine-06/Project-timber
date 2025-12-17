@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useChatStore } from "@/store/chat-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -12,9 +12,10 @@ import { CommunityActions } from "@/api-actions/community-actions";
 import { Send, Hash, Users, Loader2, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import type { UserJoinedData } from "@/types/socket";
 
 export function ChatArea() {
-  const { activeCommunity, messages, setMessages, addMessage, typingUsers, myCommunities, addCommunity } = useChatStore();
+  const { activeCommunity, messages, setMessagesForCommunity, addMessage, typingUsers, addCommunity, updateCommunity, setActiveCommunity, isUserMemberOfCommunity } = useChatStore();
   const { user } = useAuthStore();
   const [messageInput, setMessageInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,9 +27,6 @@ export function ChatArea() {
   // Fetch messages when community changes
   useEffect(() => {
     if (activeCommunity?._id) {
-      // Clear messages immediately when switching communities
-      setMessages([]);
-      
       fetchMessages();
       if (socketService.isConnected()) {
         socketService.joinCommunity(activeCommunity._id);
@@ -61,13 +59,14 @@ export function ChatArea() {
       console.log('Current community ID:', currentCommunityIdRef.current);
       console.log('Message community ID:', data.community || data.communityId);
       
-      // Only add message if it belongs to the CURRENT community
+      // Always add the message to the store (it will be stored per community)
+      // The store will handle showing it only in the correct community
       const messageCommunityId = data.community || data.communityId;
-      if (messageCommunityId === currentCommunityIdRef.current) {
-        console.log('Adding message to store');
+      if (messageCommunityId) {
+        console.log('Adding message to store for community:', messageCommunityId);
         addMessage(data);
       } else {
-        console.log('Ignoring message from different community');
+        console.log('Message missing community ID, ignoring');
       }
     };
 
@@ -77,12 +76,28 @@ export function ChatArea() {
       }
     };
 
+    const handleUserJoined = (data: UserJoinedData) => {
+      if (data.communityId === currentCommunityIdRef.current) {
+        // Refresh community data when someone joins
+        if (activeCommunity) {
+          CommunityActions.GetCommunityByIdAction(activeCommunity._id)
+            .then((updatedCommunity) => {
+              setActiveCommunity(updatedCommunity);
+              updateCommunity(activeCommunity._id, updatedCommunity);
+            })
+            .catch(console.error);
+        }
+      }
+    };
+
     socketService.onNewMessage(handleNewMessage);
     socketService.onUserTyping(handleTyping);
+    socketService.onUserJoinedCommunity(handleUserJoined);
 
     return () => {
       socketService.offNewMessage();
       socketService.offUserTyping();
+      socketService.offUserJoinedCommunity();
     };
   }, [activeCommunity?._id, user?._id]);
 
@@ -105,7 +120,8 @@ export function ChatArea() {
       setIsLoading(true);
       const data = await CommunityActions.GetCommunityMessagesAction(activeCommunity._id);
       // Reverse the array to show oldest messages first (chronological order)
-      setMessages(data.reverse());
+      const reversedData = data.reverse();
+      setMessagesForCommunity(activeCommunity._id, reversedData);
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     } finally {
@@ -157,7 +173,13 @@ export function ChatArea() {
       
       // Fetch the full community details after joining
       const fullCommunity = await CommunityActions.GetCommunityByIdAction(activeCommunity._id);
+      
+      // Add to myCommunities if not already there
       addCommunity(fullCommunity);
+      
+      // Update the active community with the new data (including updated member list)
+      setActiveCommunity(fullCommunity);
+      
       toast.success(`Joined ${activeCommunity.name}!`);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to join community");
@@ -168,8 +190,7 @@ export function ChatArea() {
 
   // Check if user is a member or admin of the active community
   const hasJoined = activeCommunity && user
-    ? activeCommunity.members.some((member) => member._id === user._id) ||
-      activeCommunity.admins.some((admin) => admin._id === user._id)
+    ? isUserMemberOfCommunity(activeCommunity._id, user._id)
     : false;
 
   const currentTypingUsers = activeCommunity ? typingUsers[activeCommunity._id] || [] : [];
@@ -189,7 +210,7 @@ export function ChatArea() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 chat-container">
       {/* Header */}
       <div className="h-16 border-b flex items-center px-4 gap-3 bg-card shrink-0">
         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -228,7 +249,10 @@ export function ChatArea() {
       {/* Messages - with proper scrolling */}
       <div 
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4"
+        className="chat-messages p-4 space-y-4 scroll-smooth"
+        style={{ 
+          scrollBehavior: 'smooth'
+        }}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -297,14 +321,14 @@ export function ChatArea() {
 
       {/* Typing Indicator */}
       {currentTypingUsers.length > 0 && (
-        <div className="px-4 py-2 text-sm text-muted-foreground shrink-0">
+        <div className="px-4 py-2 text-sm text-muted-foreground flex-shrink-0">
           {currentTypingUsers.map((u) => u.username).join(", ")}{" "}
           {currentTypingUsers.length === 1 ? "is" : "are"} typing...
         </div>
       )}
 
       {/* Input */}
-      <div className="p-4 border-t bg-card shrink-0">
+      <div className="chat-input p-4 border-t bg-card">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             value={messageInput}

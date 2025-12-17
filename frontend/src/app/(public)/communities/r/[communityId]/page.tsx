@@ -71,7 +71,7 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="flex-1 bg-background flex overflow-hidden">
+    <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-background">
       <ChatArea />
       {activeCommunity && <CommunityMembers community={activeCommunity} />}
     </div>
