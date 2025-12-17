@@ -32,20 +32,20 @@ export function SiteHeader() {
     // Invalidate queries to clear personalized data before logging out
     queryClient.invalidateQueries({ queryKey: ['posts'] });
     queryClient.invalidateQueries({ queryKey: ['bookmarkedPosts'] });
-    
+
     // Clear auth state
     setLogout();
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+    <header className="sticky top-0 z-50 flex h-18 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-[width,height] ease-linear">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
+        <SidebarTrigger className="-ml-1 h-12 w-12 [&_svg]:size-6" />
+        <Separator orientation="vertical" className="mr-2 h-10" />
         <div className="flex items-center gap-2 font-bold text-xl md:hidden">
-          <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex aspect-square size-8 items-center justify-center rounded-full p-[1px]">
+          <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex aspect-square size-10 items-center justify-center rounded-full p-[1px]">
             <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950">
-              <Leaf className="size-4 text-emerald-400" />
+              <Leaf className="size-6 text-emerald-400" />
             </div>
           </div>
           <span>Timber</span>
@@ -55,7 +55,7 @@ export function SiteHeader() {
       {/* Search Bar */}
       <div className="flex-1 max-w-xl mx-auto hidden md:block">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search ChatCom"
@@ -68,7 +68,7 @@ export function SiteHeader() {
 
           {/* Search Results Dropdown */}
           {isSearchFocused && debouncedSearch && (
-            <div 
+            <div
               className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50"
               onMouseDown={(e) => e.preventDefault()} // Prevent input blur when clicking inside dropdown
             >
@@ -107,28 +107,28 @@ export function SiteHeader() {
 
       {/* Right Actions */}
       <div className="flex items-center gap-1 md:gap-2 ml-auto">
-        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground h-10 w-10">
-          <Search className="h-[22px] w-[22px]" />
+        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground h-12 w-12">
+          <Search className="h-6 w-6" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="hidden sm:flex text-muted-foreground h-10 w-10"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden sm:flex text-muted-foreground h-12 w-12"
           onClick={() => setIsCreatePostOpen(true)}
         >
-          <Plus className="h-[22px] w-[22px]" />
+          <Plus className="h-6 w-6" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-10 w-10">
-          <MessageCircle className="h-[22px] w-[22px]" />
+        <Button variant="ghost" size="icon" className="h-12 w-12">
+          <MessageCircle className="h-6 w-6" />
         </Button>
 
         <ThemeSwitcher />
 
         <div className="ml-2">
           {isLoading ? (
-            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
           ) : isAuthenticated && user ? (
-            <ProfileDropdown 
+            <ProfileDropdown
               data={{
                 name: user.name,
                 email: user.email,

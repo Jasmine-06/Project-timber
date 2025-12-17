@@ -22,9 +22,9 @@ export default function Page() {
   }
 
   return (
-    <div className="flex gap-16 justify-center max-w-5xl mx-auto px-4">
+    <div className="flex gap-16 justify-center max-w-7xl mx-auto px-4">
       {/* Main Feed */}
-      <div className="flex flex-col w-full max-w-[470px]">
+      <div className="flex flex-col w-full max-w-2xl">
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-10">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
