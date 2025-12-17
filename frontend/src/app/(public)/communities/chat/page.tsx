@@ -49,7 +49,7 @@ export default function CommunityChatPage() {
   }
 
   return (
-    <div className="absolute inset-0 bg-background flex overflow-hidden">
+    <div className="h-[calc(100vh-4rem)] bg-background flex overflow-hidden">
       <ChatArea />
       {activeCommunity && <CommunityMembers community={activeCommunity} />}
     </div>

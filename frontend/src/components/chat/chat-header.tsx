@@ -23,7 +23,7 @@ import { LogOut, User, UserPlus, Loader2 } from "lucide-react";
 export function ChatHeader() {
   const router = useRouter();
   const { user, setLogout } = useAuthStore();
-  const { activeCommunity, myCommunities, addCommunity } = useChatStore();
+  const { activeCommunity, myCommunities, addCommunity, setActiveCommunity } = useChatStore();
   const [isJoining, setIsJoining] = useState(false);
 
   const handleLogout = async () => {
@@ -49,7 +49,13 @@ export function ChatHeader() {
       
       // Fetch the full community details after joining
       const fullCommunity = await CommunityActions.GetCommunityByIdAction(activeCommunity._id);
+      
+      // Add to myCommunities if not already there
       addCommunity(fullCommunity);
+      
+      // Update the active community with the new data (including updated member list)
+      setActiveCommunity(fullCommunity);
+      
       toast.success(`Joined ${activeCommunity.name}!`);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to join community");
