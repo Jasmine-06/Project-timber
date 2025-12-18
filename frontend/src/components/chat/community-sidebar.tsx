@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { CommunityActions } from "@/api-actions/community-actions";
 import { useChatStore } from "@/store/chat-store";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { Plus, Users, Search, Hash, Lock, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CommunityFormDialog } from "./community-form-dialog";
 
 export function CommunitySidebar() {
   const { myCommunities, setMyCommunities, activeCommunity, setActiveCommunity, addCommunity } = useChatStore();
@@ -20,12 +19,6 @@ export function CommunitySidebar() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [newCommunity, setNewCommunity] = useState({ 
-    name: "", 
-    description: "",
-    isPrivate: false 
-  });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -46,25 +39,9 @@ export function CommunitySidebar() {
     }
   };
 
-  const handleCreateCommunity = async () => {
-    if (!newCommunity.name.trim() || !newCommunity.description.trim()) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-      const community = await CommunityActions.CreateCommunityAction(newCommunity);
-      addCommunity(community);
-      setActiveCommunity(community);
-      toast.success("Community created successfully!");
-      setIsCreateDialogOpen(false);
-      setNewCommunity({ name: "", description: "", isPrivate: false });
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create community");
-    } finally {
-      setIsCreating(false);
-    }
+  const handleCreateSuccess = (community: ICommunity) => {
+    addCommunity(community);
+    setActiveCommunity(community);
   };
 
   const filteredCommunities = myCommunities.filter((c) =>
@@ -77,66 +54,23 @@ export function CommunitySidebar() {
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-lg">Communities</h2>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="icon" variant="ghost" className="h-8 w-8">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Community</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Community name"
-                    value={newCommunity.name}
-                    onChange={(e) => setNewCommunity({ ...newCommunity, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="What's this community about?"
-                    value={newCommunity.description}
-                    onChange={(e) => setNewCommunity({ ...newCommunity, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isPrivate"
-                    checked={newCommunity.isPrivate}
-                    onChange={(e) => setNewCommunity({ ...newCommunity, isPrivate: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <Label htmlFor="isPrivate" className="text-sm font-normal">
-                    Make this community private
-                  </Label>
-                </div>
-                <Button 
-                  onClick={handleCreateCommunity} 
-                  className="w-full"
-                  disabled={isCreating}
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Create Community"
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-8 w-8"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
+        
+        <CommunityFormDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          mode="create"
+          onSuccess={handleCreateSuccess}
+        />
+        
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -172,7 +106,18 @@ export function CommunitySidebar() {
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {community.isPrivate ? (
+                    {community.avatar ? (
+                      <Avatar className="h-10 w-10 rounded-lg">
+                        <AvatarImage src={community.avatar} />
+                        <AvatarFallback>
+                          {community.isPrivate ? (
+                            <Lock className="h-5 w-5 text-primary" />
+                          ) : (
+                            <Hash className="h-5 w-5 text-primary" />
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : community.isPrivate ? (
                       <Lock className="h-5 w-5 text-primary" />
                     ) : (
                       <Hash className="h-5 w-5 text-primary" />

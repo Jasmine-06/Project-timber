@@ -10,6 +10,7 @@ interface Message {
   replyTo?: string;
   isEdited?: boolean;
   isDeleted?: boolean;
+  readBy?: string[];
   createdAt: string;
 }
 
@@ -32,7 +33,12 @@ interface ChatState {
   setMessagesForCommunity: (communityId: string, messages: Message[]) => void;
   getMessagesForCommunity: (communityId: string) => Message[];
   isUserMemberOfCommunity: (communityId: string, userId: string) => boolean;
+  joinCommunity: (communityId: string) => Promise<ICommunity>;
+  clearMessagesCache: (communityId?: string) => void;
   addMessage: (message: Message) => void;
+  deleteMessage: (messageId: string) => void;
+  editMessage: (messageId: string, content: string) => void;
+  markMessageAsRead: (messageId: string, userId: string) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   removeMessage: (messageId: string) => void;
   setTypingUser: (
@@ -56,7 +62,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set((state) => {
       // Check if community already exists
       const existingIndex = state.myCommunities.findIndex((c) => c._id === community._id);
-      
+
       if (existingIndex >= 0) {
         // Update existing community
         const updatedCommunities = [...state.myCommunities];
@@ -114,9 +120,66 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const state = get();
     const community = state.myCommunities.find(c => c._id === communityId) || state.activeCommunity;
     if (!community || community._id !== communityId) return false;
-    
-    return community.members.some(member => member._id === userId) ||
-           community.admins.some(admin => admin._id === userId);
+
+    // Check if user is in members or admins array
+    const isInMembers = community.members?.some(member => member._id === userId) || false;
+    const isInAdmins = community.admins?.some(admin => admin._id === userId) || false;
+
+    return isInMembers || isInAdmins;
+  },
+
+  joinCommunity: async (communityId) => {
+    const { CommunityActions } = await import("@/api-actions/community-actions");
+
+    // Join the community
+    await CommunityActions.JoinCommunityAction(communityId);
+
+    // Fetch updated community data
+    const fullCommunity = await CommunityActions.GetCommunityByIdAction(communityId);
+
+    // Update store
+    const state = get();
+    const existingIndex = state.myCommunities.findIndex((c) => c._id === communityId);
+
+    if (existingIndex >= 0) {
+      // Update existing community
+      const updatedCommunities = [...state.myCommunities];
+      updatedCommunities[existingIndex] = fullCommunity;
+      set({ myCommunities: updatedCommunities });
+    } else {
+      // Add new community
+      set({ myCommunities: [...state.myCommunities, fullCommunity] });
+    }
+
+    // Update active community if it's the one being joined
+    if (state.activeCommunity?._id === communityId) {
+      set({ activeCommunity: fullCommunity });
+    }
+
+    // Join the socket room
+    const { socketService } = await import("@/lib/socket");
+    socketService.joinCommunity(communityId);
+
+    return fullCommunity;
+  },
+
+  clearMessagesCache: (communityId) => {
+    set((state) => {
+      if (communityId) {
+        // Clear cache for specific community
+        const { [communityId]: _, ...rest } = state.messagesByCommunity;
+        return {
+          messagesByCommunity: rest,
+          messages: state.activeCommunity?._id === communityId ? [] : state.messages,
+        };
+      } else {
+        // Clear all message cache
+        return {
+          messagesByCommunity: {},
+          messages: [],
+        };
+      }
+    });
   },
 
   addMessage: (message) =>
@@ -129,7 +192,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // Get current messages for this community
       const communityMessages = state.messagesByCommunity[communityId] || [];
-      
+
       // Prevent duplicate messages by checking if message with same _id already exists
       const messageExists = communityMessages.some((m) => m._id === message._id);
       if (messageExists) {
@@ -139,9 +202,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const updatedCommunityMessages = [...communityMessages, message];
       const isActiveComm = state.activeCommunity?._id === communityId;
-      
+
       console.log('Adding message to community:', communityId, 'Active community:', state.activeCommunity?._id, 'Is active:', isActiveComm);
-      
+
       return {
         messagesByCommunity: {
           ...state.messagesByCommunity,
@@ -157,7 +220,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const updatedMessages = state.messages.map((m) =>
         m._id === messageId ? { ...m, ...updates } : m
       );
-      
+
       // Also update in messagesByCommunity
       const updatedMessagesByCommunity = { ...state.messagesByCommunity };
       Object.keys(updatedMessagesByCommunity).forEach((communityId) => {
@@ -175,7 +238,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   removeMessage: (messageId) =>
     set((state) => {
       const updatedMessages = state.messages.filter((m) => m._id !== messageId);
-      
+
       // Also remove from messagesByCommunity
       const updatedMessagesByCommunity = { ...state.messagesByCommunity };
       Object.keys(updatedMessagesByCommunity).forEach((communityId) => {
@@ -187,6 +250,52 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messagesByCommunity: updatedMessagesByCommunity,
       };
     }),
+
+  deleteMessage: async (messageId) => {
+    const { socketService } = await import("@/lib/socket");
+    socketService.deleteMessage(messageId);
+  },
+
+  editMessage: async (messageId, content) => {
+    const { socketService } = await import("@/lib/socket");
+    socketService.editMessage(messageId, content);
+  },
+
+  markMessageAsRead: async (messageId, userId) => {
+    // Optimistically update the UI
+    set((state) => {
+      const updateMessageReadBy = (message: Message) => {
+        if (message._id === messageId && !message.readBy?.includes(userId)) {
+          return {
+            ...message,
+            readBy: [...(message.readBy || []), userId]
+          };
+        }
+        return message;
+      };
+
+      const updatedMessages = state.messages.map(updateMessageReadBy);
+
+      // Also update in messagesByCommunity
+      const updatedMessagesByCommunity = { ...state.messagesByCommunity };
+      Object.keys(updatedMessagesByCommunity).forEach((communityId) => {
+        updatedMessagesByCommunity[communityId] = updatedMessagesByCommunity[communityId].map(updateMessageReadBy);
+      });
+
+      return {
+        messages: updatedMessages,
+        messagesByCommunity: updatedMessagesByCommunity,
+      };
+    });
+
+    // Send to server
+    try {
+      const { socketService } = await import("@/lib/socket");
+      socketService.markMessageAsRead(messageId);
+    } catch (error) {
+      console.error("Failed to mark message as read:", error);
+    }
+  },
 
   setTypingUser: (communityId, userId, username, isTyping) =>
     set((state) => {
