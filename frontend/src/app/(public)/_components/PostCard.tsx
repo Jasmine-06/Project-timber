@@ -1,5 +1,6 @@
 'use client'
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -42,6 +43,12 @@ export function PostCard({
   // TanStack Query mutations
   const toggleLikeMutation = useToggleLike()
   const toggleBookmarkMutation = useToggleBookmark()
+  const router = useRouter()
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/u/${username}`);
+  }
 
   const handleLike = () => {
     // Call API - optimistic update is handled by the mutation hook
@@ -60,14 +67,19 @@ export function PostCard({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11">
-            <AvatarImage src={userAvatar} />
-            <AvatarFallback className="bg-primary/20 text-primary text-sm">
-              {username[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div onClick={handleProfileClick} className="cursor-pointer hover:opacity-80 transition-opacity">
+            <Avatar className="h-11 w-11">
+              <AvatarImage src={userAvatar} />
+              <AvatarFallback className="bg-primary/20 text-primary text-sm">
+                {username[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold hover:opacity-70 cursor-pointer">
+            <span
+              onClick={handleProfileClick}
+              className="text-lg font-semibold hover:underline cursor-pointer"
+            >
               {username}
             </span>
             <span className="text-muted-foreground text-sm">•</span>
