@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { CommunitySettings } from "./community-settings";
 import { Users, Shield } from "lucide-react";
+import { getTotalMemberCount, getRegularMembers } from "@/lib/community-utils";
 
 interface CommunityMembersProps {
   community: ICommunity;
@@ -12,14 +13,8 @@ interface CommunityMembersProps {
 
 export function CommunityMembers({ community }: CommunityMembersProps) {
   const admins = community.admins || [];
-  const members = community.members || [];
-
-  // Exclude admins from members list
-  const regularMembers = members.filter(
-    (member) => !admins.some((admin) => admin._id === member._id)
-  );
-
-  const totalMembers = admins.length + members.length;
+  const regularMembers = getRegularMembers(community);
+  const totalMembers = getTotalMemberCount(community);
 
   return (
     <div className="w-80 bg-card border-l flex flex-col h-full">

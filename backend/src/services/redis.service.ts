@@ -3,21 +3,21 @@ import type { IMessage } from "../models/message.model";
 
 const redisConfig = process.env.REDIS_HOST
   ? {
-      host: process.env.REDIS_HOST,
-      port: Number(process.env.REDIS_PORT) || 6379,
-      password: process.env.REDIS_PASSWORD,
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false, // This might need to be true for some providers, but keeping as was in original
-    }
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false, // This might need to be true for some providers, but keeping as was in original
+  }
   : process.env.REDIS_URL || "redis://localhost:6379";
 
 // Create Redis clients for Pub/Sub
 export const pubClient =
   typeof redisConfig === "string"
     ? new Redis(redisConfig, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-      })
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    })
     : new Redis(redisConfig);
 
 export const subClient = pubClient.duplicate();
@@ -47,6 +47,7 @@ export const REDIS_CHANNELS = {
   USER_OFFLINE: "user:offline",
   MESSAGE_DELETED: "community:message:deleted",
   MESSAGE_EDITED: "community:message:edited",
+  MESSAGE_READ: "community:message:read",
 } as const;
 
 export type RedisChannel = (typeof REDIS_CHANNELS)[keyof typeof REDIS_CHANNELS];
@@ -78,6 +79,12 @@ export interface RedisPayloads {
     communityId: string;
     content: string;
     isEdited: boolean;
+  };
+  [REDIS_CHANNELS.MESSAGE_READ]: {
+    messageId: string;
+    userId: string;
+    username: string;
+    communityId: string;
   };
 }
 

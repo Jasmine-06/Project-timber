@@ -198,6 +198,17 @@ class SocketService {
         this.socket?.emit("typing", { communityId, isTyping });
     }
 
+    /**
+     * Mark message as read
+     */
+    markMessageAsRead(messageId: string) {
+        if (!this.isConnected()) {
+            console.warn("⚠️ Socket not connected. Cannot mark message as read.");
+            return;
+        }
+        this.socket?.emit("mark-message-read", { messageId });
+    }
+
     // ==================== EVENT LISTENERS ====================
 
     /**
@@ -233,6 +244,13 @@ class SocketService {
      */
     onMessageEdited(callback: (data: MessageEditedData) => void) {
         this.socket?.on("message-edited", callback);
+    }
+
+    /**
+     * Listen for message read events
+     */
+    onMessageRead(callback: (data: { messageId: string; userId: string; username: string }) => void) {
+        this.socket?.on("message-read", callback);
     }
 
     /**
@@ -298,6 +316,13 @@ class SocketService {
      */
     offMessageEdited() {
         this.socket?.off("message-edited");
+    }
+
+    /**
+     * Remove message read listener
+     */
+    offMessageRead() {
+        this.socket?.off("message-read");
     }
 
     /**

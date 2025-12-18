@@ -4,18 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { useChatStore } from "@/store/chat-store";
 import { useAuthStore } from "@/store/auth-store";
 import { socketService } from "@/lib/socket";
 import { CommunityActions } from "@/api-actions/community-actions";
 import { Send, Hash, Users, Loader2, UserPlus } from "lucide-react";
-import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { toast } from "sonner";
-import type { UserJoinedData } from "@/types/socket";
+import type { UserJoinedData, MessageEditedData, MessageDeletedData } from "@/types/socket";
+import { MessageItem } from "./message-item";
+import { getTotalMemberCount, getAllUniqueMembers } from "@/lib/community-utils";
 
 export function ChatArea() {
-  const { activeCommunity, messages, setMessagesForCommunity, addMessage, typingUsers, addCommunity, updateCommunity, setActiveCommunity, isUserMemberOfCommunity } = useChatStore();
+  const { activeCommunity, messages, setMessagesForCommunity, addMessage, updateMessage, typingUsers, updateCommunity, setActiveCommunity, isUserMemberOfCommunity, joinCommunity } = useChatStore();
   const { user } = useAuthStore();
   const [messageInput, setMessageInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -77,27 +80,67 @@ export function ChatArea() {
     };
 
     const handleUserJoined = (data: UserJoinedData) => {
-      if (data.communityId === currentCommunityIdRef.current) {
-        // Refresh community data when someone joins
-        if (activeCommunity) {
-          CommunityActions.GetCommunityByIdAction(activeCommunity._id)
-            .then((updatedCommunity) => {
-              setActiveCommunity(updatedCommunity);
-              updateCommunity(activeCommunity._id, updatedCommunity);
-            })
-            .catch(console.error);
-        }
+      if (data.communityId === currentCommunityIdRef.current && activeCommunity) {
+        // Instead of making an API call, just update the member count optimistically
+        // The real data will be synced when needed
+        const currentCount = activeCommunity.memberCount || getTotalMemberCount(activeCommunity);
+        const updatedCommunity = {
+          ...activeCommunity,
+          memberCount: currentCount + 1
+        };
+        setActiveCommunity(updatedCommunity);
+        updateCommunity(activeCommunity._id, { memberCount: updatedCommunity.memberCount });
       }
     };
 
+    const handleMessageEdited = (data: MessageEditedData) => {
+      console.log('Message edited:', data);
+      updateMessage(data.messageId, { 
+        content: data.content, 
+        isEdited: data.isEdited 
+      });
+    };
+
+    const handleMessageDeleted = (data: MessageDeletedData) => {
+      console.log('Message deleted:', data);
+      updateMessage(data.messageId, { isDeleted: true });
+    };
+
+    const handleMessageRead = (data: { messageId: string; userId: string; username: string }) => {
+      console.log('📬 Message read event received:', data);
+      if (data.userId !== user?._id) {
+        // Find the current message to get its readBy array
+        const currentMessage = messages.find(m => m._id === data.messageId);
+        console.log('📬 Current message readBy before update:', currentMessage?.readBy);
+        if (currentMessage && !currentMessage.readBy?.includes(data.userId)) {
+          const newReadBy = [...(currentMessage.readBy || []), data.userId];
+          console.log('📬 Updating message readBy to:', newReadBy);
+          updateMessage(data.messageId, {
+            readBy: newReadBy
+          });
+        }
+      } else {
+        console.log('📬 Ignoring own read event');
+      }
+    };
+
+
     socketService.onNewMessage(handleNewMessage);
+    socketService.onMessageSent(handleNewMessage); // Handle sender's own messages immediately
     socketService.onUserTyping(handleTyping);
     socketService.onUserJoinedCommunity(handleUserJoined);
+    socketService.onMessageEdited(handleMessageEdited);
+    socketService.onMessageDeleted(handleMessageDeleted);
+    socketService.onMessageRead(handleMessageRead);
 
     return () => {
       socketService.offNewMessage();
+      socketService.offMessageSent();
       socketService.offUserTyping();
       socketService.offUserJoinedCommunity();
+      socketService.offMessageEdited();
+      socketService.offMessageDeleted();
+      socketService.offMessageRead();
     };
   }, [activeCommunity?._id, user?._id]);
 
@@ -115,6 +158,13 @@ export function ChatArea() {
 
   const fetchMessages = async () => {
     if (!activeCommunity) return;
+
+    // Check if messages are already cached
+    const cachedMessages = useChatStore.getState().getMessagesForCommunity(activeCommunity._id);
+    if (cachedMessages.length > 0) {
+      console.log('Using cached messages for community:', activeCommunity._id);
+      return; // Messages already loaded
+    }
 
     try {
       setIsLoading(true);
@@ -153,7 +203,10 @@ export function ChatArea() {
 
     if (!activeCommunity) return;
 
-    socketService.setTyping(activeCommunity._id, true);
+    // Only send typing indicator if user is actually typing (not just focused)
+    if (e.target.value.length > 0) {
+      socketService.setTyping(activeCommunity._id, true);
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -169,17 +222,7 @@ export function ChatArea() {
 
     try {
       setIsJoining(true);
-      await CommunityActions.JoinCommunityAction(activeCommunity._id);
-      
-      // Fetch the full community details after joining
-      const fullCommunity = await CommunityActions.GetCommunityByIdAction(activeCommunity._id);
-      
-      // Add to myCommunities if not already there
-      addCommunity(fullCommunity);
-      
-      // Update the active community with the new data (including updated member list)
-      setActiveCommunity(fullCommunity);
-      
+      await joinCommunity(activeCommunity._id);
       toast.success(`Joined ${activeCommunity.name}!`);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to join community");
@@ -213,14 +256,23 @@ export function ChatArea() {
     <div className="flex-1 chat-container">
       {/* Header */}
       <div className="h-16 border-b flex items-center px-4 gap-3 bg-card shrink-0">
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Hash className="h-5 w-5 text-primary" />
-        </div>
+        {activeCommunity.avatar ? (
+          <Avatar className="h-10 w-10 rounded-lg">
+            <AvatarImage src={activeCommunity.avatar} />
+            <AvatarFallback className="bg-primary/10">
+              <Hash className="h-5 w-5 text-primary" />
+            </AvatarFallback>
+          </Avatar>
+        ) : (
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Hash className="h-5 w-5 text-primary" />
+          </div>
+        )}
         <div className="flex-1">
           <h2 className="font-semibold">{activeCommunity.name}</h2>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {activeCommunity.memberCount || activeCommunity.members?.length || 0} members
+            {activeCommunity.memberCount || getTotalMemberCount(activeCommunity)} members
           </p>
         </div>
         
@@ -275,44 +327,13 @@ export function ChatArea() {
               const messageKey = message._id || `${message.createdAt}-${index}` || `msg-${index}`;
 
               return (
-                <div
+                <MessageItem
                   key={messageKey}
-                  className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}
-                >
-                  {showAvatar ? (
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={message.sender.profile_picture} />
-                      <AvatarFallback className="bg-primary/10">
-                        {message.sender.username?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className="h-10 w-10" />
-                  )}
-
-                  <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? "items-end" : ""}`}>
-                    {showAvatar && (
-                      <div className="flex items-center gap-2 px-1">
-                        <span className="text-sm font-medium">{message.sender.username}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(message.createdAt), "h:mm a")}
-                        </span>
-                      </div>
-                    )}
-                    <div
-                      className={`rounded-2xl px-4 py-2 ${
-                        isOwn
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="text-sm break-words">{message.content}</p>
-                      {message.isEdited && (
-                        <span className="text-xs opacity-70">(edited)</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  message={message}
+                  showAvatar={showAvatar}
+                  isOwn={isOwn}
+                  communityMembers={getAllUniqueMembers(activeCommunity)}
+                />
               );
             })}
           </>
