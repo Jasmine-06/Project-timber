@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PostActions } from '@/api-actions/post-action';
-import { IUpdatePostSchema } from '@/schema/post.schema';
-import { toast } from 'sonner';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { PostActions } from "@/api-actions/post-action";
+import { IUpdatePostSchema } from "@/schema/post.schema";
+import { toast } from "sonner";
 
 export const useUpdatePostMutation = () => {
     const queryClient = useQueryClient();
@@ -9,13 +9,18 @@ export const useUpdatePostMutation = () => {
     return useMutation({
         mutationFn: ({ postId, data }: { postId: string; data: IUpdatePostSchema }) =>
             PostActions.UpdatePostAction(postId, data),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-            queryClient.invalidateQueries({ queryKey: ['post', data._id] });
-            toast.success('Post updated');
+        onSuccess: (updatedPost) => {
+            queryClient.setQueryData(["posts"], (oldPosts: IPost[] | undefined) => {
+                if (!oldPosts) return [updatedPost];
+                return oldPosts.map((post) =>
+                    post._id === updatedPost._id ? updatedPost : post
+                );
+            });
+            queryClient.invalidateQueries({ queryKey: ["post", updatedPost._id] });
+            toast.success("Post updated successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to update post');
+            toast.error(error.response?.data?.message || "Failed to update post");
         },
     });
 };
@@ -25,12 +30,15 @@ export const useDeletePostMutation = () => {
 
     return useMutation({
         mutationFn: (postId: string) => PostActions.DeletePostAction(postId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-            toast.success('Post deleted');
+        onSuccess: (_, postId) => {
+            queryClient.setQueryData(["posts"], (oldPosts: IPost[] | undefined) => {
+                if (!oldPosts) return [];
+                return oldPosts.filter((post) => post._id !== postId);
+            });
+            toast.success("Post deleted successfully");
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Failed to delete post');
+            toast.error(error.response?.data?.message || "Failed to delete post");
         },
     });
 };
