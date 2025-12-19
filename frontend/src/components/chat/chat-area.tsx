@@ -323,6 +323,11 @@ export function ChatArea() {
               const isOwn = message.sender._id === user?._id;
               const showAvatar = index === 0 || messages[index - 1]?.sender?._id !== message.sender?._id;
               
+              // Check if this is the latest message from this sender
+              const isLatestFromSender = !messages.slice(index + 1).some(
+                (m) => m.sender._id === message.sender._id
+              );
+              
               // Create a more robust unique key
               const messageKey = message._id || `${message.createdAt}-${index}` || `msg-${index}`;
 
@@ -332,6 +337,7 @@ export function ChatArea() {
                   message={message}
                   showAvatar={showAvatar}
                   isOwn={isOwn}
+                  isLatestFromSender={isLatestFromSender}
                   communityMembers={getAllUniqueMembers(activeCommunity)}
                 />
               );

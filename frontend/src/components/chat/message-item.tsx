@@ -35,10 +35,11 @@ interface MessageItemProps {
   message: Message;
   showAvatar: boolean;
   isOwn: boolean;
+  isLatestFromSender: boolean;
   communityMembers?: Array<{ _id: string; username: string; profile_picture?: string }>;
 }
 
-export function MessageItem({ message, showAvatar, isOwn, communityMembers }: MessageItemProps) {
+export function MessageItem({ message, showAvatar, isOwn, isLatestFromSender, communityMembers }: MessageItemProps) {
   const { updateMessage, deleteMessage, editMessage, markMessageAsRead } = useChatStore();
   const { user } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -206,8 +207,8 @@ export function MessageItem({ message, showAvatar, isOwn, communityMembers }: Me
             )}
           </div>
 
-          {/* Read Receipts - Only show for own messages */}
-          {isOwn && message.readBy && message.readBy.length > 0 && user && (
+          {/* Read Receipts - Only show for own messages and only on the latest message */}
+          {isOwn && isLatestFromSender && message.readBy && message.readBy.length > 0 && user && (
             <ReadReceipts 
               readBy={message.readBy} 
               currentUserId={user._id}
