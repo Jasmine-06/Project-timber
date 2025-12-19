@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { PostActions } from '@/api-actions/post-action';
 import { ICreatePostSchema } from '@/schema/post.schema';
 import { AxiosError } from 'axios';
+import { useAuthStore } from '@/store/auth-store';
 
 /**
  * Custom hook for creating a post using TanStack Query
@@ -10,6 +11,7 @@ import { AxiosError } from 'axios';
  */
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   return useMutation({
     mutationFn: (data: ICreatePostSchema) => PostActions.CreatePostAction(data),
@@ -19,14 +21,20 @@ export const useCreatePost = () => {
         description: 'Your post has been shared successfully.',
       });
 
-      // Optimistically update the cache
+      // Optimistically update the cache with populated user data
+      const completePost = {
+        ...newPost,
+        user_id: user || newPost.user_id
+      };
+
       queryClient.setQueryData(['posts'], (oldPosts: IPost[] | undefined) => {
-        if (!oldPosts) return [newPost];
-        return [newPost, ...oldPosts];
+        if (!oldPosts) return [completePost];
+        return [completePost, ...oldPosts];
       });
       
       // Also invalidate to be safe (eventual consistency)
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'], refetchType: 'active' });
     },
     onError: (error: AxiosError<ApiResponse<null>>) => {
       // Handle different error scenarios

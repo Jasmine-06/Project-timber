@@ -27,7 +27,7 @@ export default function UserProfilePage() {
     const queryClient = useQueryClient();
 
     const { data: profile, isLoading: loading } = useGetUserProfile(username);
-    const { data: posts, isLoading: postsLoading } = useGetPostsByUsername(username);
+    const { data: postsData, isLoading: postsLoading } = useGetPostsByUsername(username);
     const { data: followersData, isLoading: followersLoading } = useGetFollowers(profile?._id || '', 1, 50);
     const { data: followingData, isLoading: followingLoading } = useGetFollowing(profile?._id || '', 1, 50);
     const [followLoading, setFollowLoading] = useState(false);
@@ -155,7 +155,7 @@ export default function UserProfilePage() {
                         {/* Stats */}
                         <div className="flex gap-10 text-base">
                             <div className="flex gap-1">
-                                <span className="font-semibold">{profile.postsCount || 0}</span>
+                                <span className="font-semibold">{postsData?.total || 0}</span>
                                 <span className="text-muted-foreground">posts</span>
                             </div>
                             <button
@@ -190,8 +190,8 @@ export default function UserProfilePage() {
                         <button
                             onClick={() => setActiveTab("posts")}
                             className={`flex items-center gap-2 py-4 border-t -mt-px transition-colors ${activeTab === "posts"
-                                    ? "border-foreground text-foreground"
-                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                                ? "border-foreground text-foreground"
+                                : "border-transparent text-muted-foreground hover:text-foreground"
                                 }`}
                         >
                             <Grid3x3 className="h-3 w-3" />
@@ -201,8 +201,8 @@ export default function UserProfilePage() {
                             <button
                                 onClick={() => setActiveTab("saved")}
                                 className={`flex items-center gap-2 py-4 border-t -mt-px transition-colors ${activeTab === "saved"
-                                        ? "border-foreground text-foreground"
-                                        : "border-transparent text-muted-foreground hover:text-foreground"
+                                    ? "border-foreground text-foreground"
+                                    : "border-transparent text-muted-foreground hover:text-foreground"
                                     }`}
                             >
                                 <Bookmark className="h-3 w-3" />
@@ -220,8 +220,8 @@ export default function UserProfilePage() {
                                 <div className="col-span-3 flex justify-center py-20">
                                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                 </div>
-                            ) : posts && posts.length > 0 ? (
-                                posts.map((post) => (
+                            ) : postsData?.posts && postsData.posts.length > 0 ? (
+                                postsData.posts.map((post) => (
                                     <div
                                         key={post._id}
                                         className="aspect-square bg-muted relative group cursor-pointer overflow-hidden"

@@ -35,6 +35,8 @@ export const useDeletePostMutation = () => {
                 if (!oldPosts) return [];
                 return oldPosts.filter((post) => post._id !== postId);
             });
+            queryClient.invalidateQueries({ queryKey: ["posts"], refetchType: "active" });
+            queryClient.invalidateQueries({ queryKey: ["userPosts"], refetchType: "active" });
             toast.success("Post deleted successfully");
         },
         onError: (error: any) => {

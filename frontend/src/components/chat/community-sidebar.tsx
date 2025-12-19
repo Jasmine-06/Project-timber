@@ -54,23 +54,23 @@ export function CommunitySidebar() {
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-lg">Communities</h2>
-          <Button 
-            size="icon" 
-            variant="ghost" 
+          <Button
+            size="icon"
+            variant="ghost"
             className="h-8 w-8"
             onClick={() => setIsCreateDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <CommunityFormDialog
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           mode="create"
           onSuccess={handleCreateSuccess}
         />
-        
+
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -99,9 +99,8 @@ export function CommunitySidebar() {
             filteredCommunities.map((community) => (
               <Card
                 key={community._id}
-                className={`p-3 cursor-pointer transition-colors hover:bg-accent ${
-                  activeCommunity?._id === community._id ? "bg-accent border-primary" : ""
-                }`}
+                className={`p-3 cursor-pointer transition-colors hover:bg-accent ${activeCommunity?._id === community._id ? "bg-accent border-primary" : ""
+                  }`}
                 onClick={() => setActiveCommunity(community)}
               >
                 <div className="flex items-center gap-3">
