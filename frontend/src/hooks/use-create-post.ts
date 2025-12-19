@@ -13,13 +13,19 @@ export const useCreatePost = () => {
 
   return useMutation({
     mutationFn: (data: ICreatePostSchema) => PostActions.CreatePostAction(data),
-    onSuccess: (data) => {
+    onSuccess: (newPost) => {
       // Show success message
       toast.success('Post created!', {
         description: 'Your post has been shared successfully.',
       });
 
-      // Invalidate and refetch posts to show the new post
+      // Optimistically update the cache
+      queryClient.setQueryData(['posts'], (oldPosts: IPost[] | undefined) => {
+        if (!oldPosts) return [newPost];
+        return [newPost, ...oldPosts];
+      });
+      
+      // Also invalidate to be safe (eventual consistency)
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
     onError: (error: AxiosError<ApiResponse<null>>) => {
