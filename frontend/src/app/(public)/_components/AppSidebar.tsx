@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -8,6 +9,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
@@ -21,10 +25,16 @@ import {
   FileText,
   Shield,
   ScrollText,
-  Leaf
+  Leaf,
+  ChevronRight,
+  Hash,
+  Loader2
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/auth-store"
+import { useChatStore } from "@/store/chat-store"
+import { CommunityActions } from "@/api-actions/community-actions"
 
 // All menu items in a single clean list - optimized order
 const menuItems = [
@@ -54,29 +64,49 @@ const menuItems = [
     icon: Code,
   },
   {
-    title: "Timber Rules",
-    url: "/rules",
-    icon: FileText,
-  },
-  {
     title: "Privacy Policy",
     url: "/privacy-policy",
     icon: Shield,
   },
-  {
-    title: "User Agreement",
-    url: "/agreement",
-    icon: ScrollText,
-  },
 ]
 
 export function AppSidebar() {
+  const router = useRouter()
   const { user } = useAuthStore()
+  const { myCommunities, setMyCommunities } = useChatStore()
+  const [isCommunitiesOpen, setIsCommunitiesOpen] = useState(false)
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(false)
   const isAdmin = user?.roles?.includes('admin') || user?.roles?.includes('ADMIN')
+
+  // Fetch user communities on mount
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      if (myCommunities.length === 0 && user) {
+        try {
+          setIsLoadingCommunities(true)
+          const communities = await CommunityActions.GetUserCommunitiesAction()
+          setMyCommunities(communities)
+        } catch (error) {
+          console.error("Failed to fetch communities:", error)
+        } finally {
+          setIsLoadingCommunities(false)
+        }
+      }
+    }
+
+    fetchCommunities()
+  }, [user, myCommunities.length, setMyCommunities])
 
   const filteredMenuItems = menuItems.filter(item =>
     item.title !== "Developer Platform" || isAdmin
   )
+
+  const handleCommunityClick = (communityId: string) => {
+    router.push(`/communities/r/${communityId}`)
+  }
+
+  // Get top 3 communities to display
+  const displayedCommunities = myCommunities.slice(0, 3)
 
   return (
     <Sidebar collapsible="icon">
@@ -102,16 +132,116 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} className="text-base font-normal py-2.5 h-12">
-                    <Link href={item.url}>
-                      <item.icon className="size-8" strokeWidth={2.5} />
-                      <span>{item.title}</span>
+              {filteredMenuItems.map((item) => {
+                // Special handling for Communities item - make it collapsible
+                if (item.title === "Communities") {
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <div className="relative group/communities">
+                        <SidebarMenuButton 
+                          asChild 
+                          tooltip={item.title} 
+                          className="text-base font-normal py-2.5 h-12 pr-8"
+                        >
+                          <Link href={item.url} className="flex items-center">
+                            <item.icon className="size-5" strokeWidth={2.5} />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setIsCommunitiesOpen(!isCommunitiesOpen)
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-accent transition-colors group-data-[collapsible=icon]:hidden"
+                        >
+                          <ChevronRight 
+                            className={`size-4 transition-transform duration-200 text-muted-foreground ${isCommunitiesOpen ? 'rotate-90' : ''}`}
+                          />
+                        </button>
+                      </div>
+                      
+                      {isCommunitiesOpen && (
+                        <div className="mt-2 mb-3 space-y-1">
+                          {/* Section Header */}
+                          <div className="flex items-center justify-between px-3 py-1.5">
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Your Communities
+                            </h3>
+                          </div>
+
+                          {isLoadingCommunities ? (
+                            <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground">
+                              <Loader2 className="size-4 animate-spin" />
+                              <span>Loading...</span>
+                            </div>
+                          ) : displayedCommunities.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {displayedCommunities.map((community) => (
+                                <button
+                                  key={community._id}
+                                  onClick={() => handleCommunityClick(community._id)}
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-accent/80 transition-all duration-150 group/item"
+                                >
+                                  {/* Avatar */}
+                                  <div className="size-8 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+                                    {community.avatar ? (
+                                      <img 
+                                        src={community.avatar} 
+                                        alt={community.name}
+                                        className="size-8 object-cover"
+                                      />
+                                    ) : (
+                                      <div className="size-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                        <Hash className="size-4 text-primary" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Community Name */}
+                                  <span className="text-sm font-medium text-foreground group-hover/item:text-accent-foreground truncate">
+                                    {community.name}
+                                  </span>
+                                </button>
+                              ))}
+                              
+                              {/* View All Link */}
+                              {myCommunities.length > 3 && (
+                                <Link 
+                                  href="/communities/my" 
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-150 mt-1"
+                                >
+                                  <div className="size-8 flex items-center justify-center">
+                                    <Users className="size-4" />
+                                  </div>
+                                  <span className="font-medium">View all communities ({myCommunities.length})</span>
+                                </Link>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="px-3 py-3 text-sm text-muted-foreground/70 italic">
+                              No communities joined yet
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </SidebarMenuItem>
+                  )
+                }
+
+                // Regular menu items
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title} className="text-base font-normal py-2.5 h-12">
+                      <Link href={item.url}>
+                        <item.icon className="size-5" strokeWidth={2.5} />
+                        <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

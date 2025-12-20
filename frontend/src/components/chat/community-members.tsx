@@ -134,7 +134,7 @@ export function CommunityMembers({ community }: CommunityMembersProps) {
           Report community
         </Button>
 
-        {(admins.some(a => a._id === user?._id) || regularMembers.some(m => m._id === user?._id)) && (
+        {regularMembers.some(m => m._id === user?._id) && (
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 font-normal"
