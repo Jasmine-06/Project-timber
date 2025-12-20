@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { PostCard } from './_components/PostCard'
+import { PostCardSkeleton } from './_components/PostCardSkeleton'
 import RightSidebar from './_components/RightSidebar'
 import InstagramPostDialog from './_components/PostDetailDialogue'
 import { useGetPosts } from '@/hooks/use-get-posts'
 import { useAuthStore } from '@/store/auth-store'
-import { Loader2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 
@@ -26,9 +26,11 @@ export default function Page() {
       {/* Main Feed */}
       <div className="flex flex-col w-full max-w-2xl">
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
+          <>
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+          </>
         )}
 
         {isError && (
