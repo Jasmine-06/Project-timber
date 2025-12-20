@@ -50,6 +50,7 @@ export default function Page() {
             {posts.map((post) => {
               // user_id can be a string or populated IUser object
               const author = typeof post.user_id === 'string' ? null : post.user_id
+              const isAuthor = typeof post.user_id === 'string' ? post.user_id === user?._id : post.user_id._id === user?._id
 
               return (
                 <PostCard
@@ -64,6 +65,7 @@ export default function Page() {
                   commentsCount={post.comments ?? 0}
                   isLiked={post.isLiked || false}
                   isBookmarked={post.isBookmarked || false}
+                  isAuthor={isAuthor}
                   userComment={post.userComment}
                   onComment={() => handleCommentClick(post)}
                 />

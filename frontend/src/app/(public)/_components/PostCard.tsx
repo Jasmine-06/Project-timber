@@ -18,6 +18,7 @@ interface PostCardProps {
   commentsCount: number
   isLiked?: boolean
   isBookmarked?: boolean
+  isAuthor?: boolean
   userComment?: IComment | null
   onLike?: () => void
   onComment?: () => void
@@ -35,6 +36,7 @@ export function PostCard({
   commentsCount,
   isLiked = false,
   isBookmarked = false,
+  isAuthor = false,
   userComment,
   onLike,
   onComment,
@@ -86,9 +88,11 @@ export function PostCard({
             <span className="text-muted-foreground text-sm">{timeAgo}</span>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-muted">
-          <MoreHorizontal className="h-6 w-6" />
-        </Button>
+        {isAuthor && (
+          <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-muted">
+            <MoreHorizontal className="h-6 w-6" />
+          </Button>
+        )}
       </div>
 
       {/* Image */}

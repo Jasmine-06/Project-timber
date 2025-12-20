@@ -39,7 +39,7 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
   return (
     <div
       className={cn(
-        "relative ml-3 flex h-11 w-fit items-center rounded-full bg-muted p-1",
+        "relative ml-3 flex h-8 w-fit items-center rounded-full bg-muted p-1",
         className
       )}
     >
@@ -49,7 +49,7 @@ export const ThemeSwitcher = ({ className }: ThemeSwitcherProps) => {
         return (
           <button
             aria-label={label}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full"
+            className="relative flex h-7 w-7 items-center justify-center rounded-full"
             key={key}
             onClick={() => setTheme(key)}
             type="button"

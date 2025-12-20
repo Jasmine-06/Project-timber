@@ -16,7 +16,6 @@ import { AvatarImage } from "@/components/ui/avatar"
 import { CreatePostDialog } from './CreatePostDialog'
 import ProfileDropdown from '@/components/kokonutui/profile-dropdown'
 import { ThemeSwitcher } from '@/components/kibo-ui/theme-switcher'
-import { CommunityFormDialog } from "@/components/chat/community-form-dialog"
 import { useRouter } from "next/navigation"
 import { useChatStore } from "@/store/chat-store"
 import { useQueryClient } from '@tanstack/react-query'
@@ -29,7 +28,6 @@ export function SiteHeader() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
-  const [isCreateCommunityOpen, setIsCreateCommunityOpen] = useState(false)
 
   const debouncedSearch = useDebounce(searchQuery, 500)
   const { users: searchResults, isLoading: isSearching } = useSearchUsers(debouncedSearch)
@@ -43,20 +41,6 @@ export function SiteHeader() {
     setLogout();
   }
 
-  const handleCreateCommunitySuccess = async (community: ICommunity) => {
-    // 1. Invalidate and refetch communities
-    await queryClient.invalidateQueries({
-      queryKey: ["communities"],
-      refetchType: "active"
-    });
-
-    // 2. Update local store (Sidebar)
-    addCommunity(community);
-    setActiveCommunity(community);
-
-    // 3. Navigate to the new community
-    router.push(`/communities/r/${community._id}`);
-  };
 
   return (
     <header className="sticky top-0 z-50 flex h-18 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-[width,height] ease-linear">
@@ -143,7 +127,7 @@ export function SiteHeader() {
           variant="ghost"
           size="icon"
           className="h-12 w-12"
-          onClick={() => setIsCreateCommunityOpen(true)}
+          onClick={() => router.push("/communities/my")}
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
@@ -174,12 +158,6 @@ export function SiteHeader() {
       </div>
 
       <CreatePostDialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen} />
-      <CommunityFormDialog
-        open={isCreateCommunityOpen}
-        onOpenChange={setIsCreateCommunityOpen}
-        mode="create"
-        onSuccess={handleCreateCommunitySuccess}
-      />
     </header>
   )
 }

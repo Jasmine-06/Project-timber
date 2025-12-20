@@ -261,30 +261,28 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 </Avatar>
                 <span className="text-sm font-semibold text-foreground">{author.username}</span>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground/70 hover:text-foreground hover:bg-muted/50">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isAuthor && (
-                    <>
-                      <DropdownMenuItem onClick={() => setIsEditingPost(true)}>
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Edit Caption
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-500 hover:text-red-600 focus:text-red-600"
-                        onClick={() => setIsDeleteAlertOpen(true)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Post
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isAuthor && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground/70 hover:text-foreground hover:bg-muted/50">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsEditingPost(true)}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit Caption
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-500 hover:text-red-600 focus:text-red-600"
+                      onClick={() => setIsDeleteAlertOpen(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Post
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Caption & Comments */}
