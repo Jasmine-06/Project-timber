@@ -22,9 +22,9 @@ export default function Page() {
   }
 
   return (
-    <div className="flex gap-16 justify-center max-w-7xl mx-auto px-4">
+    <div className="flex gap-20 justify-center max-w-7xl mx-auto px-4">
       {/* Main Feed */}
-      <div className="flex flex-col w-full max-w-2xl">
+      <div className="flex flex-col w-full max-w-lg">
         {isLoading && (
           <>
             <PostCardSkeleton />
@@ -76,7 +76,9 @@ export default function Page() {
       </div>
 
       {/* Right Sidebar */}
-      <RightSidebar />
+      <div className="hidden xl:block">
+        <RightSidebar />
+      </div>
 
       {/* Post Detail Dialog */}
       {selectedPost && (

@@ -45,8 +45,6 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 flex h-18 shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-[width,height] ease-linear">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1 h-12 w-12 [&_svg]:size-6" />
-        <Separator orientation="vertical" className="mr-2 h-10" />
         <div className="flex items-center gap-2 font-bold text-xl md:hidden">
           <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 flex aspect-square size-10 items-center justify-center rounded-full p-[1px]">
             <div className="flex h-full w-full items-center justify-center rounded-full bg-zinc-950">

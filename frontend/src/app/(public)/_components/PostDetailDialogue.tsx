@@ -468,7 +468,7 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">{(post.likes || 0).toLocaleString()} likes</p>
+                  <p className="text-sm font-semibold text-foreground">{(livePost.likes || 0).toLocaleString()} likes</p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">{formatTime(post.createdAt)}</p>
                 </div>
               </div>
