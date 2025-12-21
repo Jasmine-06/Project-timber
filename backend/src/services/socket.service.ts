@@ -48,7 +48,8 @@ export const setupSocketHandlers = async (io: Server) => {
     REDIS_CHANNELS.COMMUNITY_MESSAGE,
     REDIS_CHANNELS.USER_TYPING,
     REDIS_CHANNELS.MESSAGE_DELETED,
-    REDIS_CHANNELS.MESSAGE_EDITED
+    REDIS_CHANNELS.MESSAGE_EDITED,
+    REDIS_CHANNELS.MESSAGE_READ
   );
 
   subscriber.on("message", (channel, message) => {
@@ -66,6 +67,9 @@ export const setupSocketHandlers = async (io: Server) => {
         break;
       case REDIS_CHANNELS.MESSAGE_EDITED:
         io.to(`community:${data.communityId}`).emit("message-edited", data);
+        break;
+      case REDIS_CHANNELS.MESSAGE_READ:
+        io.to(`community:${data.communityId}`).emit("message-read", data);
         break;
     }
   });
@@ -105,9 +109,9 @@ export const setupSocketHandlers = async (io: Server) => {
         console.log(`User ${user.username} authenticated`);
       } catch (error) {
         console.error("Authentication error:", error);
-        socket.emit("error", { 
-          message: "Authentication failed", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Authentication failed",
+          details: error instanceof Error ? error.message : "Unknown error"
         });
       }
     });
@@ -147,9 +151,9 @@ export const setupSocketHandlers = async (io: Server) => {
           });
       } catch (error) {
         console.error("Join community error:", error);
-        socket.emit("error", { 
-          message: "Failed to join community", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Failed to join community",
+          details: error instanceof Error ? error.message : "Unknown error"
         });
       }
     });
@@ -161,9 +165,9 @@ export const setupSocketHandlers = async (io: Server) => {
         socket.emit("left-community", { communityId: data.communityId });
       } catch (error) {
         console.error("Leave community error:", error);
-        socket.emit("error", { 
-          message: "Failed to leave community", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Failed to leave community",
+          details: error instanceof Error ? error.message : "Unknown error"
         });
       }
     });
@@ -227,6 +231,7 @@ export const setupSocketHandlers = async (io: Server) => {
           createdAt: message.createdAt,
           isEdited: message.isEdited,
           isDeleted: message.isDeleted,
+          readBy: message.readBy || [],
         };
 
         // Publish to Redis for horizontal scaling
@@ -236,9 +241,9 @@ export const setupSocketHandlers = async (io: Server) => {
         socket.emit("message-sent", messageData);
       } catch (error) {
         console.error("Send message error:", error);
-        socket.emit("error", { 
-          message: "Failed to send message", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Failed to send message",
+          details: error instanceof Error ? error.message : "Unknown error"
         });
       }
     });
@@ -257,9 +262,9 @@ export const setupSocketHandlers = async (io: Server) => {
       } catch (error) {
         console.error("Typing indicator error:", error);
         // Usually we don't want to spam errors for typing, but for debugging:
-        socket.emit("error", { 
-          message: "Failed to send typing indicator", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Failed to send typing indicator",
+          details: error instanceof Error ? error.message : "Unknown error"
         });
       }
     });
@@ -302,9 +307,59 @@ export const setupSocketHandlers = async (io: Server) => {
         });
       } catch (error) {
         console.error("Delete message error:", error);
-        socket.emit("error", { 
-          message: "Failed to delete message", 
-          details: error instanceof Error ? error.message : "Unknown error" 
+        socket.emit("error", {
+          message: "Failed to delete message",
+          details: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    });
+
+    // Handle marking message as read
+    socket.on("mark-message-read", async (data: { messageId: string }) => {
+      try {
+        if (!socket.userId) {
+          socket.emit("error", { message: "Not authenticated" });
+          return;
+        }
+
+        const message = await Message.findById(data.messageId);
+        if (!message) {
+          socket.emit("error", { message: "Message not found" });
+          return;
+        }
+
+        // Check if user is a member of the community
+        const community = await Community.findById(message.community);
+        if (
+          !community ||
+          !community.members.some((m) => m.toString() === socket.userId)
+        ) {
+          socket.emit("error", {
+            message: "You are not a member of this community",
+          });
+          return;
+        }
+
+        // Add user to readBy array if not already present
+        const updated = await Message.findByIdAndUpdate(
+          data.messageId,
+          { $addToSet: { readBy: socket.userId } },
+          { new: true }
+        );
+
+        if (updated) {
+          await publishMessage(REDIS_CHANNELS.MESSAGE_READ, {
+            messageId: data.messageId,
+            userId: socket.userId,
+            username: socket.username || "",
+            communityId: message.community.toString(),
+          });
+        }
+      } catch (error) {
+        console.error("Mark message as read error:", error);
+        socket.emit("error", {
+          message: "Failed to mark message as read",
+          details: error instanceof Error ? error.message : "Unknown error",
         });
       }
     });
@@ -344,9 +399,9 @@ export const setupSocketHandlers = async (io: Server) => {
           });
         } catch (error) {
           console.error("Edit message error:", error);
-          socket.emit("error", { 
-            message: "Failed to edit message", 
-            details: error instanceof Error ? error.message : "Unknown error" 
+          socket.emit("error", {
+            message: "Failed to edit message",
+            details: error instanceof Error ? error.message : "Unknown error"
           });
         }
       }

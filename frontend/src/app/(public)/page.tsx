@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { PostCard } from './_components/PostCard'
+import { PostCardSkeleton } from './_components/PostCardSkeleton'
 import RightSidebar from './_components/RightSidebar'
 import InstagramPostDialog from './_components/PostDetailDialogue'
 import { useGetPosts } from '@/hooks/use-get-posts'
 import { useAuthStore } from '@/store/auth-store'
-import { Loader2 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 
@@ -22,13 +22,15 @@ export default function Page() {
   }
 
   return (
-    <div className="flex gap-16 justify-center max-w-7xl mx-auto px-4">
+    <div className="flex gap-20 justify-center max-w-7xl mx-auto px-4">
       {/* Main Feed */}
-      <div className="flex flex-col w-full max-w-2xl">
+      <div className="flex flex-col w-full max-w-lg">
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-          </div>
+          <>
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+          </>
         )}
 
         {isError && (
@@ -48,6 +50,7 @@ export default function Page() {
             {posts.map((post) => {
               // user_id can be a string or populated IUser object
               const author = typeof post.user_id === 'string' ? null : post.user_id
+              const isAuthor = typeof post.user_id === 'string' ? post.user_id === user?._id : post.user_id._id === user?._id
 
               return (
                 <PostCard
@@ -62,6 +65,7 @@ export default function Page() {
                   commentsCount={post.comments ?? 0}
                   isLiked={post.isLiked || false}
                   isBookmarked={post.isBookmarked || false}
+                  isAuthor={isAuthor}
                   userComment={post.userComment}
                   onComment={() => handleCommentClick(post)}
                 />
@@ -72,7 +76,9 @@ export default function Page() {
       </div>
 
       {/* Right Sidebar */}
-      <RightSidebar />
+      <div className="hidden xl:block">
+        <RightSidebar />
+      </div>
 
       {/* Post Detail Dialog */}
       {selectedPost && (

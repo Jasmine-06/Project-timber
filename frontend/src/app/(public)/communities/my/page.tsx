@@ -9,17 +9,15 @@ import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import { CommunityFormDialog } from "@/components/chat/community-form-dialog";
 
-export default function CommunitiesPage() {
+export default function MyCommunitiesPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const { data: communitiesResponse, isLoading } = useQuery({
-    queryKey: ["communities", "all"],
-    queryFn: () => CommunityActions.GetAllCommunitiesAction(1, 50, ""),
+  const { data: communities, isLoading } = useQuery({
+    queryKey: ["communities", "user"],
+    queryFn: () => CommunityActions.GetUserCommunitiesAction(),
   });
-
-  const communities = communitiesResponse?.communities || [];
 
   const handleCommunityClick = (communityId: string) => {
     router.push(`/communities/r/${communityId}`);
@@ -42,8 +40,8 @@ export default function CommunitiesPage() {
       <div className="border-b border-border px-6 py-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-foreground mb-1">Top Communities</h1>
-            <p className="text-sm text-muted-foreground">Timber's largest communities</p>
+            <h1 className="text-xl font-semibold text-foreground mb-1">Your Communities</h1>
+            <p className="text-sm text-muted-foreground">Communities you've joined</p>
           </div>
           
           {/* Create Community Button */}
@@ -67,9 +65,12 @@ export default function CommunitiesPage() {
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : communities.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            No communities found.
+        ) : !communities || communities.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground mb-4">You haven't joined any communities yet.</p>
+            <Button onClick={() => router.push("/communities")}>
+              Explore Communities
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
@@ -88,7 +89,6 @@ export default function CommunitiesPage() {
                 <Avatar className="h-10 w-10 flex-shrink-0">
                   <AvatarImage src={community.avatar || community.image} alt={community.name} />
                   <AvatarFallback className="bg-muted text-foreground text-lg border border-border">
-                    {/* Fallback to first letter or emoji if name is "r/..." */}
                     {community.name.replace("r/", "").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

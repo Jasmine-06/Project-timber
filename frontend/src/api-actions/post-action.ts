@@ -22,11 +22,11 @@ export const PostActions = {
   },
 
   // Get posts by username (public)
-  GetPostsByUsernameAction: async (username: string): Promise<IPost[]> => {
-    const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], total: number, page: number, limit: number }>>(
+  GetPostsByUsernameAction: async (username: string): Promise<{ posts: IPost[], total: number }> => {
+    const response = await axiosInstance.get<ApiResponse<{ posts: IPost[], totalPosts: number, totalPage: number, currentPage: number }>>(
       `/post/user/${username}`
     );
-    return response.data.data!.posts;
+    return { posts: response.data.data!.posts, total: response.data.data!.totalPosts };
   },
 
   // Get post by ID (public)

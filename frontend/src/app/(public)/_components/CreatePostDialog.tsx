@@ -107,7 +107,7 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
           <div className="px-4 py-3">
             <div className="flex gap-3">
               {/* User Avatar */}
-              <Avatar className="h-10 w-10 rounded-full flex-shrink-0">
+              <Avatar className="h-10 w-10 rounded-full shrink-0">
                 <AvatarImage src={user?.profile_picture} />
                 <AvatarFallback className="rounded-full bg-primary text-primary-foreground">
                   {user?.username?.[0]?.toUpperCase()}

@@ -8,10 +8,30 @@ import {
   Bookmark,
   MoreHorizontal,
   X,
-  Loader2
+  Loader2,
+  Trash2,
+  Edit2
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useGetPostComments } from "@/hooks/use-get-post-comments";
 import { useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from "@/hooks/use-comment-mutations";
+import { useDeletePostMutation, useUpdatePostMutation } from "@/hooks/use-post-mutations";
 import { useAuthStore } from "@/store/auth-store";
 import { useToggleLike } from "@/hooks/use-toggle-like";
 import { useToggleBookmark } from "@/hooks/use-toggle-bookmark";
@@ -28,21 +48,30 @@ interface InstagramPostDialogProps {
 const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogProps) => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  
+
   // Get live post data from query cache for two-way communication
   const cachedPosts = queryClient.getQueryData<IPost[]>(['posts']);
   const livePost = cachedPosts?.find(p => p._id === post._id) || post;
-  
+
   const { data: commentsData, isLoading: isCommentsLoading } = useGetPostComments(post._id);
   const { mutate: createComment, isPending: isCreatingComment } = useCreateCommentMutation();
   const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteCommentMutation();
   const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateCommentMutation();
   const { mutate: toggleLike } = useToggleLike();
   const { mutate: toggleBookmark } = useToggleBookmark();
+  const { mutate: deletePost, isPending: isDeletingPost } = useDeletePostMutation();
+  const { mutate: updatePost, isPending: isUpdatingPost } = useUpdatePostMutation();
 
   const [comment, setComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+
+  // Post editing state
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [postCaption, setPostCaption] = useState(post.caption || "");
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+
+  const isAuthor = typeof post.user_id === 'string' ? post.user_id === user?._id : post.user_id._id === user?._id;
 
   const handlePostComment = () => {
     if (!comment.trim()) return;
@@ -84,6 +113,31 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
     });
   };
 
+  const handleDeletePost = () => {
+    deletePost(post._id, {
+      onSuccess: () => {
+        setIsDeleteAlertOpen(false);
+        onOpenChange(false);
+      }
+    });
+  };
+
+  const handleUpdatePost = () => {
+    // Assuming existing images are kept, only caption is updated for now
+    // Since the API requires array of strings for images
+    updatePost({
+      postId: post._id,
+      data: {
+        caption: postCaption,
+        images: post.images || [] // Keep existing images
+      }
+    }, {
+      onSuccess: () => {
+        setIsEditingPost(false);
+      }
+    });
+  };
+
 
 
 
@@ -91,13 +145,15 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
+      setPostCaption(post.caption || ""); // Reset caption on open
     } else {
       document.body.style.overflow = 'unset';
+      setIsEditingPost(false); // Reset edit mode on close
     }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [open]);
+  }, [open, post.caption]);
 
   if (!open) return null;
 
@@ -205,9 +261,28 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 </Avatar>
                 <span className="text-sm font-semibold text-foreground">{author.username}</span>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground/70 hover:text-foreground hover:bg-muted/50">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              {isAuthor && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground/70 hover:text-foreground hover:bg-muted/50">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsEditingPost(true)}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit Caption
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-500 hover:text-red-600 focus:text-red-600"
+                      onClick={() => setIsDeleteAlertOpen(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Post
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Caption & Comments */}
@@ -222,11 +297,40 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-relaxed">
+                    <div className="text-sm text-foreground leading-relaxed">
                       <span className="font-semibold">{author.username}</span>{" "}
-                      <span className="text-foreground">{post.caption}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{formatTime(post.createdAt)}</p>
+                      {isEditingPost ? (
+                        <div className="mt-1 flex flex-col gap-2">
+                          <Input
+                            value={postCaption}
+                            onChange={(e) => setPostCaption(e.target.value)}
+                            className="text-sm"
+                            autoFocus
+                          />
+                          <div className="flex gap-2 text-xs">
+                            <button
+                              onClick={handleUpdatePost}
+                              disabled={isUpdatingPost}
+                              className="font-semibold text-blue-500 hover:text-blue-600 disabled:opacity-50"
+                            >
+                              {isUpdatingPost ? "Saving..." : "Save"}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsEditingPost(false);
+                                setPostCaption(post.caption || "");
+                              }}
+                              className="font-semibold text-muted-foreground hover:text-foreground"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-foreground">{post.caption}</span>
+                      )}
+                    </div>
+                    {!isEditingPost && <p className="text-xs text-muted-foreground mt-1">{formatTime(post.createdAt)}</p>}
                   </div>
                 </div>
               )}
@@ -364,7 +468,7 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">{(post.likes || 0).toLocaleString()} likes</p>
+                  <p className="text-sm font-semibold text-foreground">{(livePost.likes || 0).toLocaleString()} likes</p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">{formatTime(post.createdAt)}</p>
                 </div>
               </div>
@@ -399,6 +503,27 @@ const InstagramPostDialog = ({ open, onOpenChange, post }: InstagramPostDialogPr
           </div>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your post.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePost}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeletingPost}
+            >
+              {isDeletingPost ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

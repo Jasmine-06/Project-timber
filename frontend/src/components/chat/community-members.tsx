@@ -1,25 +1,40 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { CommunitySettings } from "./community-settings";
-import { Users, Shield } from "lucide-react";
+import { Users, Shield, LogOut } from "lucide-react";
+import { getTotalMemberCount, getRegularMembers } from "@/lib/community-utils";
+import { useChatStore } from "@/store/chat-store";
+import { CommunityActions } from "@/api-actions/community-actions";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth-store";
+import { useRouter } from "next/navigation";
 
 interface CommunityMembersProps {
   community: ICommunity;
 }
 
 export function CommunityMembers({ community }: CommunityMembersProps) {
+  const router = useRouter();
+  const { removeCommunity } = useChatStore();
+  const { user } = useAuthStore();
   const admins = community.admins || [];
-  const members = community.members || [];
+  const regularMembers = getRegularMembers(community);
+  const totalMembers = getTotalMemberCount(community);
 
-  // Exclude admins from members list
-  const regularMembers = members.filter(
-    (member) => !admins.some((admin) => admin._id === member._id)
-  );
-
-  const totalMembers = admins.length + members.length;
+  const handleLeaveCommunity = async () => {
+    try {
+      await CommunityActions.LeaveCommunityAction(community._id);
+      removeCommunity(community._id);
+      toast.success("Left community successfully");
+      router.push("/communities");
+    } catch (error) {
+      toast.error("Failed to leave community");
+    }
+  };
 
   return (
     <div className="w-80 bg-card border-l flex flex-col h-full">
@@ -106,6 +121,32 @@ export function CommunityMembers({ community }: CommunityMembersProps) {
           )}
         </div>
       </ScrollArea>
+
+      <div className="p-2 border-t bg-card mt-auto space-y-1">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 font-normal"
+          onClick={() => toast.info("Coming soon")}
+        >
+          <div className="h-4 w-4 flex items-center justify-center">
+            <Shield className="h-4 w-4" />
+          </div>
+          Report community
+        </Button>
+
+        {regularMembers.some(m => m._id === user?._id) && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 font-normal"
+            onClick={handleLeaveCommunity}
+          >
+            <div className="h-4 w-4 flex items-center justify-center">
+              <LogOut className="h-4 w-4" />
+            </div>
+            Exit community
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

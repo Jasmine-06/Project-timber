@@ -109,9 +109,9 @@ export function FollowingDialog({
                   className="flex items-center justify-between px-4 py-2 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Avatar className="h-11 w-11 flex-shrink-0">
+                    <Avatar className="h-11 w-11 shrink-0">
                       <AvatarImage src={user.profile_picture} />
-                      <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-medium">
+                      <AvatarFallback className="bg-linear-to-br from-emerald-500 to-teal-600 text-white text-sm font-medium">
                         {user.username[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -127,7 +127,7 @@ export function FollowingDialog({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-sm font-semibold flex-shrink-0 h-8 px-4 hover:bg-muted/50 rounded-md"
+                    className="text-sm font-semibold shrink-0 h-8 px-4 hover:bg-muted/50 rounded-md"
                     onClick={() => handleUnfollow(user._id)}
                   >
                     Following
