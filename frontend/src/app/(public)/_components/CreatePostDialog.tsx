@@ -90,17 +90,8 @@ export function CreatePostDialog({ open, onOpenChange }: CreatePostDialogProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-2xl border border-border bg-background">
-        <DialogHeader className="px-4 py-3 flex flex-row items-center justify-between border-b border-border">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenChange(false)}
-            className="rounded-full h-8 w-8 hover:bg-muted -ml-2"
-          >
-            <X className="h-5 w-5 text-foreground" />
-          </Button>
-          <DialogTitle className="text-foreground font-bold text-base sr-only">Create post</DialogTitle>
-          <div className="w-8"></div>
+        <DialogHeader className="px-4 py-3 flex flex-row items-center justify-center border-b border-border">
+          <DialogTitle className="text-foreground font-bold text-base">Create post</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="max-h-[70vh]">

@@ -118,7 +118,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   isUserMemberOfCommunity: (communityId, userId) => {
     const state = get();
-    const community = state.myCommunities.find(c => c._id === communityId) || state.activeCommunity;
+    // Prioritize activeCommunity if it matches, as it's more likely to have fresh data
+    const community = (state.activeCommunity?._id === communityId)
+      ? state.activeCommunity
+      : state.myCommunities.find(c => c._id === communityId);
+
     if (!community || community._id !== communityId) return false;
 
     // Check if user is in members or admins array

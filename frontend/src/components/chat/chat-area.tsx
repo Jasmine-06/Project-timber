@@ -222,7 +222,9 @@ export function ChatArea() {
 
     try {
       setIsJoining(true);
-      await joinCommunity(activeCommunity._id);
+      const updatedCommunity = await joinCommunity(activeCommunity._id);
+      // Update the active community with fresh data that includes the user in members
+      setActiveCommunity(updatedCommunity);
       toast.success(`Joined ${activeCommunity.name}!`);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to join community");
