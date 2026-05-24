@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Leaf, Eye, EyeOff, Sprout, ArrowLeft, Mail } from 'lucide-react';
@@ -26,7 +26,7 @@ import {
 
 // type ViewMode = 'login' | 'forgot' | 'reset';
 
-const TimberLogin: React.FC = () => {
+const TimberLoginContent: React.FC = () => {
   const router = useRouter();
   const [view, setView] = useQueryState("view", parseAsStringEnum(["login", "forgot", "reset"]).withDefault("login"));
   const [resetEmail, setResetEmail] = useQueryState('email', { defaultValue: '' });
@@ -554,6 +554,14 @@ const TimberLogin: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const TimberLogin: React.FC = () => {
+  return (
+    <Suspense fallback={null}>
+      <TimberLoginContent />
+    </Suspense>
   );
 };
 

@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth-store'
 import Link from 'next/link'
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useSearchUsers } from '@/hooks/use-search-users'
 import { AvatarImage } from "@/components/ui/avatar"
@@ -22,7 +22,12 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function SiteHeader() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const { isAuthenticated, user, setLogout, isLoading } = useAuthStore()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const { addCommunity, setActiveCommunity } = useChatStore()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState("")
@@ -133,7 +138,7 @@ export function SiteHeader() {
         <ThemeSwitcher />
 
         <div className="ml-2">
-          {isLoading ? (
+          {!mounted || isLoading ? (
             <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
           ) : isAuthenticated && user ? (
             <ProfileDropdown

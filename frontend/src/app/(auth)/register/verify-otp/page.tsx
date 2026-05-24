@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { Leaf, Sprout, ArrowLeft, Mail } from 'lucide-react';
@@ -15,7 +15,7 @@ import {
     InputOTPSlot,
 } from "@/components/ui/input-otp";
 
-const VerifyOtpPage: React.FC = () => {
+const VerifyOtpPageContent: React.FC = () => {
     const router = useRouter();
     const [email] = useQueryState('email', { defaultValue: '' });
 
@@ -276,6 +276,14 @@ const VerifyOtpPage: React.FC = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const VerifyOtpPage: React.FC = () => {
+    return (
+        <Suspense fallback={null}>
+            <VerifyOtpPageContent />
+        </Suspense>
     );
 };
 

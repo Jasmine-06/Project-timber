@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <!-- Brand gradient matching from-emerald-500 via-emerald-600 to-teal-600 -->
+    <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer circle with the exact brand gradient and scaled stroke weight -->
+  <circle cx="16" cy="16" r="14" stroke="url(#brand-gradient)" stroke-width="2" />
+  
+  <!-- Centered and scaled Lucide Leaf path from v0.561.0 -->
+  <!-- Scaled to 66.7% (16px size) to match the 50% relative proportion of the actual Timber logo -->
+  <g transform="translate(8, 8) scale(0.667)">
+    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
