@@ -16,9 +16,22 @@ app.use((req, res, next) => {
   next();
 });
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+  : ["http://localhost:3000", "https://project-timber.onrender.com"];
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://project-timber.onrender.com"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -38,6 +51,23 @@ app.use(
 );
 
 app.use(express.static("public"));
+
+// Health check routes
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Timber Backend Server is running successfully!",
+    status: "Healthy"
+  });
+});
+
+app.get("/api/v1", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Timber API v1 is running successfully!",
+    status: "Healthy"
+  });
+});
 
 // Routes
 app.use("/api/v1/auth", authRouter);
