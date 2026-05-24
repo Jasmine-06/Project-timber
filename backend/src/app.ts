@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
-  : ["http://localhost:3000", "https://project-timber.onrender.com"];
+  : ["http://localhost:3000", "https://timber-nine-tau.vercel.app"];
 
 app.use(
   cors({
@@ -29,10 +29,13 @@ app.use(
       if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        // Prevent server crashes by using callback(null, false) instead of throwing a raw JavaScript Error object
+        callback(null, false);
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
   })
 );
 
