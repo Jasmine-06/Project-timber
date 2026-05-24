@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth-store'
 import { Loader2, ShieldOff } from 'lucide-react'
@@ -13,18 +13,28 @@ interface SuspendedAccountGuardProps {
 export function SuspendedAccountGuard({ children }: SuspendedAccountGuardProps) {
   const { user, isLoading, setLogout } = useAuthStore()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // If not loading and no user, redirect to login
-    if (!isLoading && !user) {
+    if (!isLoading && !user && mounted) {
       router.push('/login')
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router, mounted])
+
+  // On server render, show children to avoid hydration mismatch
+  if (!mounted) {
+    return <>{children}</>
+  }
 
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen" suppressHydrationWarning>
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
@@ -47,7 +57,7 @@ export function SuspendedAccountGuard({ children }: SuspendedAccountGuardProps) 
   // If account is suspended, show restriction message
   if (isSuspended) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background" suppressHydrationWarning>
         <div className="max-w-md w-full bg-card border border-border rounded-lg p-8 text-center shadow-lg">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-destructive/10 rounded-full">
@@ -84,7 +94,7 @@ export function SuspendedAccountGuard({ children }: SuspendedAccountGuardProps) 
   // If account is deleted, show deletion message
   if (isDeleted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background" suppressHydrationWarning>
         <div className="max-w-md w-full bg-card border border-border rounded-lg p-8 text-center shadow-lg">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-destructive/10 rounded-full">

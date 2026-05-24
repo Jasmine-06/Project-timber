@@ -1,5 +1,5 @@
 import { BACKEND_URL } from '@/constants/constant';
-import axios, { AxiosError, InternalAxiosRequestConfig  ,AxiosResponse, AxiosRequestConfig} from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse, AxiosRequestConfig} from 'axios';
 import { getCookie , setCookie} from "cookies-next";
 import { useAuthStore } from '@/store/auth-store';
 import { AuthActions } from '@/api-actions/auth-action';
@@ -23,6 +23,7 @@ axiosInstance.interceptors.request.use(
         }
         return request;
     },
+    
     (error: AxiosError) => {
         return Promise.reject(error);
     }
